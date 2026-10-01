@@ -1,0 +1,905 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Apple Pit Market</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a projector-first console. A crate-label header, a round banner that
+   announces the rules in big type, the trade tape as the hero, and a recorder's
+   entry strip underneath. Setup and debrief live on their own tabs. */
+:root{
+  --bg:#EBF0EA; --surface:#FAFCF9; --sunk:#E1E8E0; --ink:#15201A; --muted:#536359; --line:#C9D5CA;
+  --buy:#B3283A; --buy-soft:#F5DADE;
+  --sell:#1A6482; --sell-soft:#D3E6EE;
+  --gold:#B07A06; --band:#F1E0AE;
+  --ok:#2C7338; --ok-soft:#DCEEDB;
+  --warn:#9A3F12; --warn-soft:#F7E2D3;
+  --font-display:"Alfa Slab One", "Rockwell", "Roboto Slab", Georgia, serif;
+  --font-body:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1512; --surface:#17201B; --sunk:#111915; --ink:#E4EBE3; --muted:#94A399; --line:#2A3730;
+    --buy:#EF5D6F; --buy-soft:#3A1C22; --sell:#55B2D3; --sell-soft:#15303B;
+    --gold:#E2B13B; --band:#3A3217; --ok:#6CC07A; --ok-soft:#1A3320; --warn:#EE8F5C; --warn-soft:#3B2216;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1512; --surface:#17201B; --sunk:#111915; --ink:#E4EBE3; --muted:#94A399; --line:#2A3730;
+  --buy:#EF5D6F; --buy-soft:#3A1C22; --sell:#55B2D3; --sell-soft:#15303B;
+  --gold:#E2B13B; --band:#3A3217; --ok:#6CC07A; --ok-soft:#1A3320; --warn:#EE8F5C; --warn-soft:#3B2216;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;padding:0 clamp(16px,3vw,40px);padding-block:0 48px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding-block:18px 14px;border-bottom:2px solid var(--ink)}
+.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.brand h1{font-family:var(--font-display);font-weight:400;font-size:clamp(1.7rem,3vw,2.3rem);line-height:1;margin:0;letter-spacing:.01em}
+.brand h1 span{color:var(--buy)}
+.brand p{margin:0;color:var(--muted);font-size:.9rem}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{border:1.5px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.92rem}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.banner{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:14px;padding:10px 14px;border-radius:var(--r);background:var(--band);font-size:.92rem}
+.banner.private{background:var(--warn-soft);color:var(--ink)}
+.banner b{font-weight:700}
+
+/* buttons */
+.btn{border:1.5px solid var(--ink);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;line-height:1.2}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--ink);color:var(--bg)}
+.btn.primary:hover{opacity:.88}
+.btn.ghost{border-color:var(--line)}
+.btn.danger{border-color:var(--warn);color:var(--warn)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.small{padding:5px 10px;font-size:.85rem}
+
+/* round bar */
+.roundbar{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px 22px;margin-top:20px;padding:16px 20px;border:2px solid var(--ink);border-radius:var(--r);background:var(--surface)}
+.roundno{font-family:var(--font-display);font-size:.95rem;text-transform:uppercase;letter-spacing:.08em;line-height:1;text-align:center;padding-right:22px;border-right:2px dashed var(--line)}
+.roundno b{display:block;font-weight:400;font-size:3.2rem;margin-top:4px}
+.headline{font-size:clamp(1.25rem,2.4vw,1.9rem);font-weight:700;line-height:1.2;text-wrap:balance}
+.headline small{display:block;font-size:.95rem;font-weight:500;color:var(--muted);margin-top:4px}
+.roundctl{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.toggle{display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.toggle input{width:18px;height:18px;accent-color:var(--gold)}
+
+.panel{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0}
+.panel-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 16px;margin-bottom:8px}
+h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0;font-weight:700}
+h3{font-size:1.05rem;margin:0 0 6px}
+
+.rules-panel{margin-top:12px;display:grid;gap:14px}
+.rules-row{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.field input,.field select{border:1.5px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;font-size:1rem;color:var(--ink);min-width:0}
+.rules-preview{font-size:.95rem;color:var(--muted)}
+.rules-preview b{color:var(--ink)}
+
+/* floor */
+.floor-grid{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(260px,1fr);gap:16px;margin-top:16px}
+.chart svg{display:block;width:100%;height:auto}
+.side{display:grid;gap:16px;align-content:start}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0;overflow:hidden}
+.stat{padding:14px 16px;border-bottom:1.5px solid var(--line)}
+.stat:nth-child(odd){border-right:1.5px solid var(--line)}
+.stat:nth-last-child(-n+2){border-bottom:0}
+.stat .k{font-size:.75rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.stat .v{font-family:var(--font-display);font-size:clamp(1.7rem,3vw,2.5rem);line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .v.buy{color:var(--buy)}
+.timer{text-align:center}
+.clock{font-family:var(--font-display);font-size:clamp(3rem,6vw,4.6rem);line-height:1;font-variant-numeric:tabular-nums;margin:6px 0 12px}
+.clock.done{color:var(--warn);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.clock.done{animation:none}}
+.timer-ctl{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center}
+.timer-ctl select{border:1.5px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 8px}
+
+.entry-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.entry form{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end}
+.entry .field input{font-family:var(--font-mono);font-size:1.4rem;padding:10px 12px;width:100%}
+#fBuyer{border-color:var(--buy)}
+#fSeller{border-color:var(--sell)}
+.entry .btn.primary{padding:13px 18px;font-size:1.05rem}
+.msg{margin-top:12px;min-height:1.6em;font-weight:600;font-size:1rem}
+.msg.ok{color:var(--ok)}
+.msg.bad{color:var(--warn)}
+.hint{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+.hint code{font-family:var(--font-mono);background:var(--sunk);padding:1px 5px;border-radius:4px}
+
+.tradelist{list-style:none;margin:0;padding:0;max-height:250px;overflow-y:auto;font-family:var(--font-mono);font-size:.95rem}
+.tradelist li{display:grid;grid-template-columns:2.4em 1fr auto auto;gap:10px;align-items:center;padding:5px 2px;border-bottom:1px solid var(--line)}
+.tradelist li:last-child{border-bottom:0}
+.tradelist .n{color:var(--muted)}
+.tradelist .b{color:var(--buy);font-weight:600}
+.tradelist .s{color:var(--sell);font-weight:600}
+.tradelist .p{font-weight:600;font-variant-numeric:tabular-nums}
+.x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 6px;border-radius:4px}
+.x:hover{color:var(--warn);background:var(--warn-soft)}
+.empty{color:var(--muted);font-size:.95rem;padding:10px 0}
+
+/* debrief */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:20px;align-items:center}
+.chip{border:1.5px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.9rem}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.debrief-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;margin-top:14px;align-items:start}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.tile .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.tile .v{font-family:var(--font-display);font-size:1.6rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .s{font-size:.82rem;color:var(--muted)}
+.prompts{margin:0;padding-left:1.2em;display:grid;gap:8px;max-width:65ch}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+.earn-wrap{overflow:auto;max-height:340px}
+.earn-wrap thead th{position:sticky;top:0;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td.num,th.num{text-align:right}
+td.id{font-family:var(--font-mono);font-weight:600}
+td.id.B{color:var(--buy)} td.id.S{color:var(--sell)}
+
+/* setup */
+.setup-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.steps{margin:0;padding-left:1.3em;display:grid;gap:10px;max-width:68ch}
+.steps b{font-weight:700}
+.deck{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.deck .col h3{font-size:.95rem}
+.deck .col.B h3{color:var(--buy)} .deck .col.S h3{color:var(--sell)}
+.cardlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+.mini{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-family:var(--font-mono);font-size:.9rem;display:flex;justify-content:space-between;gap:6px;background:var(--bg)}
+.mini b{font-weight:600}
+.col.B .mini b{color:var(--buy)} .col.S .mini b{color:var(--sell)}
+.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--warn-soft);margin-top:10px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.note{font-size:.88rem;color:var(--muted)}
+
+@media (max-width:900px){
+  .floor-grid,.entry-grid,.debrief-grid,.setup-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:620px){
+  .roundbar{grid-template-columns:1fr}
+  .roundno{border-right:0;border-bottom:2px dashed var(--line);padding:0 0 10px;text-align:left}
+  .roundno b{display:inline;font-size:2rem;margin-left:8px}
+  .entry form{grid-template-columns:1fr 1fr}
+  .entry form .btn{grid-column:1/-1}
+  .deck{grid-template-columns:1fr}
+  .tiles{grid-template-columns:1fr 1fr}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Apple <span>Pit</span></h1>
+      <p>A double-auction market for Principles of Microeconomics</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Screens">
+      <button class="tab" role="tab" id="tab-floor" data-view="floor" aria-selected="true">Trading floor</button>
+      <button class="tab" role="tab" id="tab-debrief" data-view="debrief" aria-selected="false">Debrief</button>
+      <button class="tab" role="tab" id="tab-setup" data-view="setup" aria-selected="false">Setup &amp; cards</button>
+    </nav>
+  </header>
+
+  <div class="banner" id="exampleBanner" hidden>
+    <span><b>Example data.</b> A sample class of 34 is loaded so you can see how each screen works.</span>
+    <button class="btn small" id="clearExample">Clear examples and start round 1</button>
+  </div>
+
+  <!-- TRADING FLOOR -->
+  <section id="view-floor">
+    <div class="roundbar">
+      <div class="roundno">Round<b id="rNo">1</b></div>
+      <div class="headline" id="rHead"></div>
+      <div class="roundctl">
+        <button class="btn primary" id="openRules">Next round…</button>
+        <label class="toggle"><input type="checkbox" id="showPred"> Show prediction</label>
+      </div>
+    </div>
+
+    <div class="panel rules-panel" id="rulesPanel" hidden>
+      <div class="panel-h"><h2 id="rulesTitle">Rules for round 2</h2></div>
+      <div class="rules-row">
+        <label class="field">Scenario
+          <select id="rPreset">
+            <option value="open">Open market</option>
+            <option value="demand">Demand shift (buyer values change)</option>
+            <option value="frost">Supply shift (seller costs change)</option>
+            <option value="tax">Per-crate tax on sellers</option>
+            <option value="ceiling">Price ceiling</option>
+            <option value="floor">Price floor</option>
+          </select>
+        </label>
+        <label class="field" id="rAmtWrap">Amount ($)
+          <input id="rAmt" type="number" step="0.5" value="3" style="width:7em">
+        </label>
+        <div class="row">
+          <button class="btn primary" id="startRound">Start round 2</button>
+          <button class="btn" id="applyRound" hidden>Apply to round 1</button>
+          <button class="btn ghost" id="cancelRules">Cancel</button>
+        </div>
+      </div>
+      <div class="rules-preview" id="rulesPreview"></div>
+    </div>
+
+    <div class="floor-grid">
+      <div class="panel chart">
+        <div class="panel-h"><h2>Trade tape</h2><span class="note" id="tapeNote"></span></div>
+        <div id="tapeChart"></div>
+      </div>
+      <aside class="side">
+        <div class="panel stats" id="floorStats"></div>
+        <div class="panel timer">
+          <h2>Round clock</h2>
+          <div class="clock" id="clock">5:00</div>
+          <div class="timer-ctl">
+            <button class="btn primary" id="tStart">Start</button>
+            <button class="btn" id="tReset">Reset</button>
+            <label class="sr-only" for="tDur" style="position:absolute;left:-9999px">Round length</label>
+            <select id="tDur">
+              <option value="120">2 min</option><option value="180">3 min</option><option value="240">4 min</option>
+              <option value="300" selected>5 min</option><option value="420">7 min</option>
+            </select>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="entry-grid">
+      <div class="panel entry">
+        <div class="panel-h"><h2>Record a trade</h2></div>
+        <form id="tradeForm" autocomplete="off">
+          <label class="field">Buyer card<input id="fBuyer" inputmode="text" placeholder="B07"></label>
+          <label class="field">Seller card<input id="fSeller" inputmode="text" placeholder="S12"></label>
+          <label class="field">Price ($)<input id="fPrice" inputmode="decimal" placeholder="6.50"></label>
+          <button class="btn primary" type="submit">Record</button>
+        </form>
+        <div class="msg" id="msg" role="status" aria-live="polite"></div>
+        <p class="hint">Fast entry: type <code>7 12 6.5</code> in the buyer box and press Enter. Each card trades once per round.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>Trades this round</h2><button class="btn small ghost" id="undoBtn">Undo last</button></div>
+        <ol class="tradelist" id="tradeList"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEBRIEF -->
+  <section id="view-debrief" hidden>
+    <div class="chips" id="roundChips"></div>
+    <div class="debrief-grid">
+      <div class="panel chart">
+        <div class="panel-h"><h2 id="sdTitle">Supply and demand</h2></div>
+        <div id="sdChart"></div>
+        <div class="legend" id="sdLegend"></div>
+      </div>
+      <div class="side">
+        <div class="panel"><div class="panel-h"><h2>Prediction vs. what happened</h2></div><div class="tiles" id="tiles"></div></div>
+        <div class="panel"><div class="panel-h"><h2>Ask the class</h2></div><ol class="prompts" id="prompts"></ol></div>
+      </div>
+    </div>
+    <div class="debrief-grid">
+      <div class="panel chart">
+        <div class="panel-h"><h2>Average price by round</h2><span class="note">Dot is the average, whiskers the range, gold band the prediction</span></div>
+        <div id="roundsChart"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>Earnings by card, all rounds</h2><span class="note">Profit in $</span></div>
+        <div class="earn-wrap" id="earnings"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="view-setup" hidden>
+    <div class="banner private"><span><b>Keep this screen off the projector.</b> It shows every card's value and cost.</span></div>
+    <div class="setup-grid">
+      <div class="panel">
+        <div class="panel-h"><h2>Class and deck</h2></div>
+        <div class="rules-row">
+          <label class="field">Students playing
+            <input id="nStudents" type="number" min="6" max="80" value="34" style="width:7em">
+          </label>
+          <button class="btn primary" id="dealBtn">Deal a new deck</button>
+        </div>
+        <p class="note" id="deckSummary"></p>
+        <div id="dealConfirm" hidden></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="dlCards">Download printable cards</button>
+          <button class="btn" id="dlCsv">Download results (.csv)</button>
+        </div>
+        <p class="note" id="dlNote"></p>
+        <div class="deck" id="deck" style="margin-top:14px"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>Running the game</h2></div>
+        <ol class="steps">
+          <li><b>Before class.</b> Set the class size, deal a deck, then download the printable cards and cut them apart. Each card is one buyer (a packing house) or one seller (an orchard) with a private value or cost.</li>
+          <li><b>Rules, 5 minutes.</b> One crate per card per round. Buyers earn value minus price; sellers earn price minus cost. Never trade at a loss. Nobody shows their card.</li>
+          <li><b>The pit.</b> Everyone stands and calls out bids and asks. When a buyer and seller agree, both walk to the recorder (you or a TA) and read off their card numbers and the price. You type it in and it posts to the tape right away.</li>
+          <li><b>Rounds.</b> Run three open-market rounds of 4 to 5 minutes before any shock, so the class can watch prices settle. Then try a demand shift, a frost, a tax, or a price control with <i>Next round</i>.</li>
+          <li><b>Shocks.</b> Read the round headline aloud. Students adjust the number on their own card for that round (for example, buyers add $3).</li>
+          <li><b>Debrief.</b> Switch to the Debrief tab. Turn on <i>Show prediction</i> only after you've asked the class to guess where price would land.</li>
+        </ol>
+        <p class="note" style="margin-top:14px">Trades are saved in this browser only, so a page refresh won't lose a round. Nothing about students is stored; cards are tracked by number.</p>
+        <div class="row" style="margin-top:12px">
+          <button class="btn danger" id="resetBtn">Erase all rounds</button>
+        </div>
+        <div id="resetConfirm" hidden></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+const KEY = 'applepit.v1';
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const money = p => '$' + (Math.round(p * 100) / 100).toFixed(2);
+const dollars = p => Number.isInteger(p) ? '$' + p : money(p);
+const rangeTxt = (lo, hi) => (Math.abs(hi - lo) < 1e-9) ? dollars(lo) : dollars(lo) + '–' + dollars(hi);
+
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function shuffle(arr, rnd){ for (let i = arr.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+/* ---------- market model ---------- */
+function makeDeck(n, seed){
+  const nb = Math.ceil(n / 2), ns = Math.floor(n / 2);
+  const rnd = mulberry32(seed);
+  const vals = Array.from({length: nb}, (_, i) => Math.round(12 - 9 * i / Math.max(1, nb - 1)));
+  const costs = Array.from({length: ns}, (_, i) => Math.round(2 + 9 * i / Math.max(1, ns - 1)));
+  shuffle(vals, rnd); shuffle(costs, rnd);
+  return [
+    ...vals.map((v, i) => ({id: 'B' + pad(i + 1), role: 'B', base: v})),
+    ...costs.map((c, i) => ({id: 'S' + pad(i + 1), role: 'S', base: c}))
+  ];
+}
+
+function params(sc){
+  const a = Number(sc.amt) || 0;
+  return {
+    dS: sc.key === 'demand' ? a : 0,
+    sS: sc.key === 'frost' ? a : 0,
+    tax: sc.key === 'tax' ? a : 0,
+    ceil: sc.key === 'ceiling' ? a : null,
+    floor: sc.key === 'floor' ? a : null
+  };
+}
+
+function cross(V, CE){
+  let q = 0;
+  while (q < V.length && q < CE.length && V[q] >= CE[q]) q++;
+  const lo = Math.max(q > 0 ? CE[q - 1] : -Infinity, q < V.length ? V[q] : -Infinity);
+  const hi = Math.min(q > 0 ? V[q - 1] : Infinity, q < CE.length ? CE[q] : Infinity);
+  return {q, lo, hi};
+}
+const sumTo = (V, C, q) => { let s = 0; for (let k = 0; k < q; k++) s += V[k] - C[k]; return s; };
+
+function analyze(deck, round){
+  const P = params(round.sc);
+  const byId = Object.fromEntries(deck.map(c => [c.id, c]));
+  const V = deck.filter(c => c.role === 'B').map(c => c.base + P.dS).sort((a, b) => b - a);
+  const C = deck.filter(c => c.role === 'S').map(c => c.base + P.sS).sort((a, b) => a - b);
+  const CE = C.map(c => c + P.tax);
+  const free = cross(V, C);                 // no tax, no price control
+  const maxSurplus = sumTo(V, C, free.q);
+  const taxed = cross(V, CE);
+  let pred = {q: taxed.q, lo: taxed.lo, hi: taxed.hi, binding: false, shortage: 0, surplus: 0};
+  if (P.ceil != null && P.ceil < taxed.lo){
+    const qd = V.filter(v => v >= P.ceil).length, qs = CE.filter(c => c <= P.ceil).length;
+    pred = {q: Math.min(qd, qs), lo: P.ceil, hi: P.ceil, binding: true, shortage: qd - qs, surplus: 0};
+  } else if (P.floor != null && P.floor > taxed.hi){
+    const qd = V.filter(v => v >= P.floor).length, qs = CE.filter(c => c <= P.floor).length;
+    pred = {q: Math.min(qd, qs), lo: P.floor, hi: P.floor, binding: true, shortage: 0, surplus: qs - qd};
+  }
+  const bestUnderPolicy = sumTo(V, C, pred.q);
+  const t = round.trades;
+  let cs = 0, ps = 0, rev = 0, extra = 0;
+  const prices = t.map(x => x.p);
+  t.forEach(x => {
+    const v = byId[x.b].base + P.dS, c = byId[x.s].base + P.sS;
+    cs += v - x.p; ps += x.p - c - P.tax; rev += P.tax;
+    if (!pred.binding && (v < taxed.lo || c + P.tax > taxed.hi)) extra++;
+  });
+  const n = prices.length;
+  const avg = n ? prices.reduce((a, b) => a + b, 0) / n : null;
+  const sd = n > 1 ? Math.sqrt(prices.reduce((a, b) => a + (b - avg) ** 2, 0) / (n - 1)) : null;
+  const realized = cs + ps + rev;
+  return {
+    P, V, C, CE, free, pred, maxSurplus, bestUnderPolicy,
+    n, avg, sd, min: n ? Math.min(...prices) : null, max: n ? Math.max(...prices) : null,
+    last: n ? prices[n - 1] : null, cs, ps, rev, realized, extra,
+    eff: maxSurplus > 0 ? realized / maxSurplus : null
+  };
+}
+
+function headline(sc){
+  const a = Number(sc.amt) || 0, abs = dollars(Math.abs(a));
+  switch (sc.key){
+    case 'demand': return a >= 0 ? ['Pie season', `Every buyer's value is ${abs} higher this round.`] : ['Juice glut', `Every buyer's value is ${abs} lower this round.`];
+    case 'frost': return a >= 0 ? ['Late frost', `Every seller's cost is ${abs} higher this round.`] : ['Bumper crop', `Every seller's cost is ${abs} lower this round.`];
+    case 'tax': return ['Crate tax', `Sellers pay the state ${abs} on every crate they sell.`];
+    case 'ceiling': return ['Price ceiling', `No crate may sell for more than ${abs}.`];
+    case 'floor': return ['Price floor', `No crate may sell for less than ${abs}.`];
+    default: return ['Open market', 'One crate per card. Any price a buyer and seller both accept.'];
+  }
+}
+const scLabel = sc => headline(sc)[0];
+
+/* ---------- state ---------- */
+let state;
+function blankState(n, seed){
+  return {n, seed, deck: makeDeck(n, seed), rounds: [{sc: {key: 'open', amt: 0}, trades: []}], cur: 0, showPred: false, example: false};
+}
+function exampleState(){
+  const s = blankState(34, 20261001);
+  s.example = true;
+  const rnd = mulberry32(7);
+  const fill = (round, count, amp0) => {
+    const a = analyze(s.deck, round);
+    const buyers = s.deck.filter(c => c.role === 'B').sort((x, y) => y.base - x.base);
+    const sellers = s.deck.filter(c => c.role === 'S').sort((x, y) => x.base - y.base);
+    const q = a.pred.q;
+    const B = shuffle(buyers.slice(0, q), rnd);
+    const S = shuffle([...sellers.slice(0, q - 1), sellers[q]], rnd);
+    const mid = (a.pred.lo + a.pred.hi) / 2;
+    for (let i = 0; i < Math.min(count, q); i++){
+      const b = B[i], sl = S[i];
+      if (b.base < sl.base) continue;
+      const amp = amp0 * (1 - i / q) + 0.3;
+      let p = mid + (rnd() * 2 - 1) * amp;
+      p = Math.min(b.base, Math.max(sl.base, Math.round(p * 4) / 4));
+      round.trades.push({b: b.id, s: sl.id, p});
+    }
+  };
+  fill(s.rounds[0], 99, 3.2);
+  s.rounds.push({sc: {key: 'open', amt: 0}, trades: []});
+  s.cur = 1;
+  fill(s.rounds[1], 6, 1.4);
+  return s;
+}
+function load(){
+  try { const raw = localStorage.getItem(KEY); if (!raw) return null; const s = JSON.parse(raw); return s && s.deck && s.rounds ? s : null; } catch (e) { return null; }
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+/* ---------- SVG helpers ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+function niceStep(range){ return range <= 8 ? 1 : range <= 18 ? 2 : range <= 40 ? 5 : 10; }
+function yAxis(y, ymax, x0, x1, label){
+  let s = '';
+  const st = niceStep(ymax);
+  for (let v = 0; v <= ymax + 1e-9; v += st){
+    s += `<line x1="${x0}" x2="${x1}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/>`;
+    s += `<text x="${x0 - 8}" y="${y(v) + 5}" text-anchor="end" font-size="14" fill="var(--muted)">$${v}</text>`;
+  }
+  s += `<text transform="translate(16 ${(y(0) + y(ymax)) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="var(--muted)" font-weight="600">${label}</text>`;
+  return s;
+}
+
+function tapeSVG(round, a, showPred){
+  const W = 820, H = 410, m = {l: 64, r: 24, t: 18, b: 50};
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const t = round.trades;
+  const n = Math.max(12, t.length + 2);
+  const top = Math.max(a.V[0] || 12, ...(t.map(x => x.p)), a.P.ceil || 0, a.P.floor || 0, (a.CE[a.CE.length - 1] || 0));
+  const ymax = Math.ceil(top / 2) * 2 + 2;
+  const x = k => m.l + (k - 0.5) / n * pw;
+  const y = v => m.t + ph - v / ymax * ph;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Trade prices in order for this round">`;
+  s += yAxis(y, ymax, m.l, W - m.r, 'Price per crate');
+  const xs = n <= 24 ? 1 : 5;
+  for (let k = 1; k <= n; k++) if (k % xs === 0 || k === 1)
+    s += `<text x="${x(k)}" y="${H - m.b + 22}" text-anchor="middle" font-size="13" fill="var(--muted)">${k}</text>`;
+  s += `<text x="${m.l + pw / 2}" y="${H - 6}" text-anchor="middle" font-size="13" fill="var(--muted)" font-weight="600">Trade number</text>`;
+  if (showPred && a.pred.q > 0){
+    const y1 = y(a.pred.hi), y2 = y(a.pred.lo);
+    const h = Math.max(6, y2 - y1), yy = h === 6 ? (y1 + y2) / 2 - 3 : y1;
+    s += `<rect x="${m.l}" y="${yy}" width="${pw}" height="${h}" fill="var(--band)" opacity="0.9"/>`;
+    s += `<text x="${W - m.r - 8}" y="${yy - 7}" text-anchor="end" font-size="15" font-weight="700" fill="var(--gold)">Predicted ${rangeTxt(a.pred.lo, a.pred.hi)}</text>`;
+  }
+  const ctl = a.P.ceil != null ? ['Ceiling', a.P.ceil] : a.P.floor != null ? ['Floor', a.P.floor] : null;
+  if (ctl){
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(ctl[1])}" y2="${y(ctl[1])}" stroke="var(--warn)" stroke-width="2.5" stroke-dasharray="8 6"/>`;
+    s += `<text x="${m.l + 8}" y="${y(ctl[1]) - 8}" font-size="15" font-weight="700" fill="var(--warn)">${ctl[0]} ${dollars(ctl[1])}</text>`;
+  }
+  if (t.length){
+    if (t.length > 1) s += `<polyline points="${t.map((d, i) => x(i + 1) + ',' + y(d.p)).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" opacity="0.55"/>`;
+    t.forEach((d, i) => {
+      const last = i === t.length - 1;
+      s += `<circle cx="${x(i + 1)}" cy="${y(d.p)}" r="${last ? 9 : 6}" fill="${last ? 'var(--buy)' : 'var(--ink)'}" stroke="var(--surface)" stroke-width="2"/>`;
+    });
+    const L = t[t.length - 1], lx = x(t.length), ly = y(L.p);
+    const anchor = t.length > n * 0.7 ? 'end' : 'start', dx = anchor === 'end' ? -14 : 14;
+    s += `<text x="${lx + dx}" y="${ly - 12}" text-anchor="${anchor}" font-size="22" font-weight="700" fill="var(--buy)" style="font-family:var(--font-display)">${money(L.p)}</text>`;
+  } else {
+    s += `<text x="${m.l + pw / 2}" y="${m.t + ph / 2}" text-anchor="middle" font-size="20" fill="var(--muted)">Waiting for the first trade</text>`;
+  }
+  return s + '</svg>';
+}
+
+function sdSVG(round, a){
+  const W = 820, H = 440, m = {l: 64, r: 24, t: 20, b: 52};
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const Q = Math.max(a.V.length, a.C.length);
+  const top = Math.max(a.V[0], a.CE[a.CE.length - 1], a.P.ceil || 0, a.P.floor || 0, a.max || 0);
+  const ymax = Math.ceil(top / 2) * 2 + 4;
+  const x = q => m.l + q / Q * pw;
+  const y = v => m.t + ph - Math.max(0, v) / ymax * ph;
+  const step = arr => { let d = `M${x(0)},${y(arr[0])}`; arr.forEach((v, k) => { d += ` H${x(k + 1)}`; if (k + 1 < arr.length) d += ` V${y(arr[k + 1])}`; }); return d; };
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Step supply and demand curves built from the cards">`;
+  s += yAxis(y, ymax, m.l, W - m.r, 'Price per crate');
+  const xs = Q <= 20 ? 2 : 5;
+  for (let q = 0; q <= Q; q += xs) s += `<text x="${x(q)}" y="${H - m.b + 22}" text-anchor="middle" font-size="13" fill="var(--muted)">${q}</text>`;
+  s += `<text x="${m.l + pw / 2}" y="${H - 6}" text-anchor="middle" font-size="13" fill="var(--muted)" font-weight="600">Crates</text>`;
+  for (let k = 0; k < a.free.q; k++){
+    s += `<rect x="${x(k)}" y="${y(a.V[k])}" width="${x(k + 1) - x(k)}" height="${Math.max(0, y(a.C[k]) - y(a.V[k]))}" fill="var(--band)" opacity="0.85"/>`;
+  }
+  s += `<path d="${step(a.V)}" fill="none" stroke="var(--buy)" stroke-width="3"/>`;
+  s += `<path d="${step(a.C)}" fill="none" stroke="var(--sell)" stroke-width="3"/>`;
+  if (a.P.tax) s += `<path d="${step(a.CE)}" fill="none" stroke="var(--sell)" stroke-width="2.5" stroke-dasharray="7 5"/>`;
+  const ctl = a.P.ceil != null ? ['Ceiling', a.P.ceil] : a.P.floor != null ? ['Floor', a.P.floor] : null;
+  if (ctl){
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(ctl[1])}" y2="${y(ctl[1])}" stroke="var(--warn)" stroke-width="2.5" stroke-dasharray="8 6"/>`;
+    s += `<text x="${W - m.r - 6}" y="${y(ctl[1]) - 8}" text-anchor="end" font-size="14" font-weight="700" fill="var(--warn)">${ctl[0]} ${dollars(ctl[1])}</text>`;
+  }
+  if (a.pred.q > 0){
+    const mid = (a.pred.lo + a.pred.hi) / 2;
+    s += `<line x1="${x(a.pred.q)}" x2="${x(a.pred.q)}" y1="${y(0)}" y2="${y(mid)}" stroke="var(--gold)" stroke-width="2" stroke-dasharray="4 4"/>`;
+    s += `<circle cx="${x(a.pred.q)}" cy="${y(mid)}" r="7" fill="var(--gold)" stroke="var(--surface)" stroke-width="2"/>`;
+    s += `<circle cx="${W - m.r - 14}" cy="${m.t + 4}" r="6" fill="var(--gold)"/><text x="${W - m.r - 28}" y="${m.t + 9}" text-anchor="end" font-size="14" font-weight="700" fill="var(--gold)">Predicted: ${a.pred.q} crates at ${rangeTxt(a.pred.lo, a.pred.hi)}</text>`;
+  }
+  if (a.n){
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(a.avg)}" y2="${y(a.avg)}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="2 5"/>`;
+    s += `<line x1="${W - m.r - 22}" x2="${W - m.r - 4}" y1="${m.t + 26}" y2="${m.t + 26}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="2 5"/><text x="${W - m.r - 28}" y="${m.t + 31}" text-anchor="end" font-size="14" font-weight="700" fill="var(--ink)">Average traded price ${money(a.avg)} (${a.n} crates)</text>`;
+  }
+  return s + '</svg>';
+}
+
+function roundsSVG(){
+  const W = 820, H = 300, m = {l: 64, r: 24, t: 18, b: 50};
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const R = state.rounds.length;
+  const as = state.rounds.map(r => analyze(state.deck, r));
+  const top = Math.max(12, ...as.map(a => Math.max(a.max || 0, a.pred.hi || 0)));
+  const ymax = Math.ceil(top / 2) * 2 + 2;
+  const slot = pw / Math.max(R, 4);
+  const x = i => m.l + slot * (i + 0.5);
+  const y = v => m.t + ph - v / ymax * ph;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Average traded price in each round against the prediction">`;
+  s += yAxis(y, ymax, m.l, W - m.r, 'Price per crate');
+  as.forEach((a, i) => {
+    const cx = x(i), bw = Math.min(64, slot * 0.7);
+    if (a.pred.q > 0){
+      const y1 = y(a.pred.hi), h = Math.max(5, y(a.pred.lo) - y1);
+      s += `<rect x="${cx - bw / 2}" y="${h === 5 ? y1 - 2.5 : y1}" width="${bw}" height="${h}" fill="var(--band)" stroke="var(--gold)" stroke-width="1"/>`;
+    }
+    if (a.n){
+      s += `<line x1="${cx}" x2="${cx}" y1="${y(a.max)}" y2="${y(a.min)}" stroke="var(--ink)" stroke-width="2"/>`;
+      s += `<line x1="${cx - 7}" x2="${cx + 7}" y1="${y(a.max)}" y2="${y(a.max)}" stroke="var(--ink)" stroke-width="2"/>`;
+      s += `<line x1="${cx - 7}" x2="${cx + 7}" y1="${y(a.min)}" y2="${y(a.min)}" stroke="var(--ink)" stroke-width="2"/>`;
+      s += `<circle cx="${cx}" cy="${y(a.avg)}" r="7" fill="var(--buy)" stroke="var(--surface)" stroke-width="2"/>`;
+    }
+    s += `<text x="${cx}" y="${H - m.b + 20}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">R${i + 1}</text>`;
+    s += `<text x="${cx}" y="${H - m.b + 36}" text-anchor="middle" font-size="11" fill="var(--muted)">${esc(scLabel(state.rounds[i].sc))}</text>`;
+  });
+  return s + '</svg>';
+}
+
+/* ---------- render ---------- */
+let view = 'floor', debriefRound = null;
+const curRound = () => state.rounds[state.cur];
+
+function renderFloor(){
+  const r = curRound(), a = analyze(state.deck, r);
+  $('rNo').textContent = state.cur + 1;
+  const [h1, h2] = headline(r.sc);
+  $('rHead').innerHTML = `${esc(h1)}<small>${esc(h2)}</small>`;
+  $('showPred').checked = !!state.showPred;
+  $('tapeChart').innerHTML = tapeSVG(r, a, state.showPred);
+  $('tapeNote').textContent = a.n ? `${a.n} trade${a.n === 1 ? '' : 's'} posted` : '';
+  $('floorStats').innerHTML = [
+    ['Trades', a.n, ''],
+    ['Last price', a.last != null ? money(a.last) : '–', 'buy'],
+    ['Average', a.avg != null ? money(a.avg) : '–', ''],
+    ['Spread (SD)', a.sd != null ? money(a.sd) : '–', '']
+  ].map(([k, v, c]) => `<div class="stat"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
+  const list = r.trades.map((t, i) => `<li><span class="n">${i + 1}</span><span><span class="b">${t.b}</span> ← <span class="s">${t.s}</span></span><span class="p">${money(t.p)}</span><button class="x" data-del="${i}" aria-label="Delete trade ${i + 1}">×</button></li>`).reverse();
+  $('tradeList').innerHTML = list.length ? list.join('') : '<li class="empty">No trades yet this round.</li>';
+  $('undoBtn').disabled = !r.trades.length;
+}
+
+function promptsFor(sc, a){
+  const amt = dollars(Math.abs(Number(sc.amt) || 0));
+  switch (sc.key){
+    case 'demand': return [
+      `Buyer values moved ${amt}. How far did the average price move, and did quantity rise or fall?`,
+      'Which sellers sat out earlier but found a buyer this round? What made the difference for them?',
+      'Draw the old and new demand curves. Where is the new equilibrium?'];
+    case 'frost': return [
+      `Seller costs rose ${amt}. Did the price rise by the full ${amt}? Why not?`,
+      'Which buyers were priced out? Where do they sit on the demand curve?',
+      'Who lost more surplus from the frost, buyers or sellers?'];
+    case 'tax': return [
+      `The tax is ${amt} per crate, paid by sellers. How much more did buyers pay than before? Who really bore the tax?`,
+      `The state collected ${money(a.rev)}. Compare that to the surplus lost compared with the open market.`,
+      'Would anything change if buyers had to pay the tax instead of sellers?'];
+    case 'ceiling': return [
+      a.pred.binding ? `At the ceiling, buyers wanted more crates than sellers offered (a shortage of about ${a.pred.shortage}). Who ended up with the crates?` : 'The ceiling was above the market price. Did it change anything?',
+      'Did the buyers who valued crates most get them? What does that do to efficiency?',
+      'Did anyone try to trade above the ceiling? What would a black market look like here?'];
+    case 'floor': return [
+      a.pred.binding ? `At the floor, sellers offered more crates than buyers wanted (about ${a.pred.surplus} unsold). Which sellers were stuck?` : 'The floor was below the market price. Did it change anything?',
+      'Compare the sellers who traded with the sellers who did not. Did the floor help sellers as a group?',
+      'Where have you seen price floors in real markets?'];
+    default: return [
+      'Nobody could see anyone else\'s card. How did prices end up so close together?',
+      'Which buyers and sellers never traded? Was it good for the market that they didn\'t?',
+      'Compare the first few trades with the last few. What changed, and why?'];
+  }
+}
+
+function renderDebrief(){
+  if (debriefRound == null || debriefRound >= state.rounds.length) debriefRound = state.cur;
+  $('roundChips').innerHTML = '<span class="note" style="margin-right:6px">Round</span>' + state.rounds.map((r, i) =>
+    `<button class="chip" data-round="${i}" aria-pressed="${i === debriefRound}">${i + 1} · ${esc(scLabel(r.sc))}</button>`).join('');
+  const r = state.rounds[debriefRound], a = analyze(state.deck, r);
+  $('sdTitle').textContent = `Supply and demand, round ${debriefRound + 1}`;
+  $('sdChart').innerHTML = sdSVG(r, a);
+  $('sdLegend').innerHTML = `<span><i style="border-color:var(--buy)"></i>Demand (buyer values)</span><span><i style="border-color:var(--sell)"></i>Supply (seller costs)</span>` +
+    (a.P.tax ? `<span><i style="border-color:var(--sell);border-top-style:dashed"></i>Supply plus tax</span>` : '') +
+    `<span><i style="border-color:var(--band);border-top-width:10px"></i>Maximum total surplus</span>`;
+  const tiles = [
+    ['Crates traded', `${a.n} <span class="s">of ${a.pred.q} predicted</span>`, ''],
+    ['Average price', a.avg != null ? money(a.avg) : '–', `Predicted ${a.pred.q ? rangeTxt(a.pred.lo, a.pred.hi) : '–'}`],
+    ['Efficiency', a.eff != null && a.n ? Math.round(a.eff * 100) + '%' : '–', `${money(a.realized)} of ${money(a.maxSurplus)} possible surplus`],
+    ['Price spread', a.sd != null ? money(a.sd) : '–', a.n ? `Low ${money(a.min)}, high ${money(a.max)}` : 'Standard deviation'],
+    ['Buyer surplus', a.n ? money(a.cs) : '–', 'Value minus price'],
+    ['Seller surplus', a.n ? money(a.ps) : '–', a.P.tax ? 'Price minus cost minus tax' : 'Price minus cost']
+  ];
+  if (a.P.tax) tiles.push(['Tax revenue', money(a.rev), `${dollars(a.P.tax)} × ${a.n} crates`], ['Deadweight loss', money(a.maxSurplus - a.bestUnderPolicy), 'At the predicted quantity']);
+  else if (a.pred.binding) tiles.push(['Deadweight loss', money(a.maxSurplus - a.bestUnderPolicy), 'Even if the right traders trade'], [a.P.ceil != null ? 'Shortage' : 'Unsold crates', String(a.P.ceil != null ? a.pred.shortage : a.pred.surplus), 'At the control price']);
+  else tiles.push(['Off-the-curve trades', a.n ? String(a.extra) : '–', 'A trader outside the predicted range traded'], ['Surplus left on table', a.n ? money(Math.max(0, a.maxSurplus - a.realized)) : '–', 'Maximum minus realized']);
+  $('tiles').innerHTML = tiles.map(([k, v, s]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="s">${s}</div>` : ''}</div>`).join('');
+  $('prompts').innerHTML = promptsFor(r.sc, a).map(p => `<li>${esc(p)}</li>`).join('');
+  $('roundsChart').innerHTML = roundsSVG();
+  // earnings
+  const earn = Object.fromEntries(state.deck.map(c => [c.id, 0]));
+  const tradesCount = Object.fromEntries(state.deck.map(c => [c.id, 0]));
+  state.rounds.forEach(rd => {
+    const P = params(rd.sc);
+    rd.trades.forEach(t => {
+      const b = state.deck.find(c => c.id === t.b), s = state.deck.find(c => c.id === t.s);
+      earn[t.b] += b.base + P.dS - t.p; earn[t.s] += t.p - (s.base + P.sS) - P.tax;
+      tradesCount[t.b]++; tradesCount[t.s]++;
+    });
+  });
+  const rows = state.deck.slice().sort((x, y) => earn[y.id] - earn[x.id]);
+  $('earnings').innerHTML = `<table><thead><tr><th>Card</th><th>Role</th><th class="num">Trades</th><th class="num">Profit</th></tr></thead><tbody>` +
+    rows.map(c => `<tr><td class="id ${c.role}">${c.id}</td><td>${c.role === 'B' ? 'Buyer' : 'Seller'}</td><td class="num">${tradesCount[c.id]}</td><td class="num">${money(earn[c.id])}</td></tr>`).join('') + '</tbody></table>';
+}
+
+function renderSetup(){
+  const nb = state.deck.filter(c => c.role === 'B').length, ns = state.deck.length - nb;
+  $('nStudents').value = state.n;
+  const a = analyze(state.deck, {sc: {key: 'open', amt: 0}, trades: []});
+  $('deckSummary').textContent = `${nb} buyers and ${ns} sellers. Open-market prediction: ${a.pred.q} crates at ${rangeTxt(a.pred.lo, a.pred.hi)}. Buyer values run $3 to $12; seller costs run $2 to $11.`;
+  const col = role => {
+    const cards = state.deck.filter(c => c.role === role);
+    return `<div class="col ${role}"><h3>${role === 'B' ? 'Buyers · value' : 'Sellers · cost'}</h3><div class="cardlist">${cards.map(c => `<div class="mini"><b>${c.id}</b><span>$${c.base}</span></div>`).join('')}</div></div>`;
+  };
+  $('deck').innerHTML = col('B') + col('S');
+}
+
+function render(){
+  ['floor', 'debrief', 'setup'].forEach(v => { $('view-' + v).hidden = v !== view; $('tab-' + v).setAttribute('aria-selected', String(v === view)); });
+  $('exampleBanner').hidden = !state.example;
+  if (view === 'floor') renderFloor();
+  if (view === 'debrief') renderDebrief();
+  if (view === 'setup') renderSetup();
+}
+
+/* ---------- trading ---------- */
+function normId(raw, role){
+  const m = String(raw || '').trim().toUpperCase().match(/^([BS])?\s*0*(\d{1,3})$/);
+  if (!m || (m[1] && m[1] !== role)) return null;
+  return role + pad(+m[2]);
+}
+function say(text, ok){ const el = $('msg'); el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'bad'); }
+
+function recordTrade(e){
+  e.preventDefault();
+  let bRaw = $('fBuyer').value, sRaw = $('fSeller').value, pRaw = $('fPrice').value;
+  const parts = bRaw.trim().split(/[\s,]+/);
+  if (parts.length === 3 && !sRaw && !pRaw) [bRaw, sRaw, pRaw] = parts;
+  const r = curRound(), P = params(r.sc);
+  const b = normId(bRaw, 'B'), s = normId(sRaw, 'S');
+  const byId = Object.fromEntries(state.deck.map(c => [c.id, c]));
+  const p = parseFloat(String(pRaw).replace(/[$\s]/g, ''));
+  if (!b || !byId[b]) return say(bRaw.trim() ? `There's no buyer card ${bRaw.trim().toUpperCase()} in this deck.` : 'Enter the buyer card number.', false);
+  if (!s || !byId[s]) return say(sRaw.trim() ? `There's no seller card ${String(sRaw).trim().toUpperCase()} in this deck.` : 'Enter the seller card number.', false);
+  if (!isFinite(p) || p <= 0) return say('Enter a price, like 6.50.', false);
+  if (r.trades.some(t => t.b === b)) return say(`${b} already bought a crate this round.`, false);
+  if (r.trades.some(t => t.s === s)) return say(`${s} already sold a crate this round.`, false);
+  if (P.ceil != null && p > P.ceil) return say(`Not allowed: ${money(p)} is above the ${dollars(P.ceil)} ceiling.`, false);
+  if (P.floor != null && p < P.floor) return say(`Not allowed: ${money(p)} is below the ${dollars(P.floor)} floor.`, false);
+  const v = byId[b].base + P.dS, c = byId[s].base + P.sS + P.tax;
+  if (p > v || p < c) return say('Not allowed: at that price one of the two traders would lose money. Ask both to check their cards.', false);
+  r.trades.push({b, s, p: Math.round(p * 100) / 100});
+  if (state.example) state.example = false;
+  save(); render();
+  say(`Recorded: ${b} bought from ${s} at ${money(p)}.`, true);
+  $('tradeForm').reset(); $('fBuyer').focus();
+}
+
+/* ---------- rules panel ---------- */
+let rulesMode = 'next';
+function defaultAmt(key){
+  const a = analyze(state.deck, {sc: {key: 'open', amt: 0}, trades: []});
+  if (key === 'ceiling') return Math.max(1, Math.floor(a.pred.lo) - 2);
+  if (key === 'floor') return Math.ceil(a.pred.hi) + 2;
+  if (key === 'tax') return 2;
+  if (key === 'demand' || key === 'frost') return 3;
+  return 0;
+}
+function updateRulesPreview(){
+  const key = $('rPreset').value;
+  $('rAmtWrap').hidden = key === 'open';
+  $('rAmtWrap').firstChild.textContent = {demand: 'Change in every buyer value ($)', frost: 'Change in every seller cost ($)', tax: 'Tax per crate ($)', ceiling: 'Ceiling price ($)', floor: 'Floor price ($)'}[key] || 'Amount ($)';
+  const sc = {key, amt: Number($('rAmt').value) || 0};
+  const a = analyze(state.deck, {sc, trades: []});
+  const [h1, h2] = headline(sc);
+  $('rulesPreview').innerHTML = `<b>${esc(h1)}.</b> ${esc(h2)} Prediction (for you): ${a.pred.q} crates at ${a.pred.q ? rangeTxt(a.pred.lo, a.pred.hi) : '–'}${a.pred.binding ? ', and the control binds' : ''}.`;
+}
+function openRules(){
+  const n = state.rounds.length;
+  $('rulesPanel').hidden = false;
+  $('rulesTitle').textContent = `Rules for round ${n + 1}`;
+  $('startRound').textContent = `Start round ${n + 1}`;
+  const canApply = !curRound().trades.length;
+  $('applyRound').hidden = !canApply;
+  $('applyRound').textContent = `Apply to round ${state.cur + 1} instead`;
+  $('rPreset').value = 'open'; $('rAmt').value = 0;
+  updateRulesPreview();
+  $('rPreset').focus();
+}
+function readSc(){ const key = $('rPreset').value; return {key, amt: key === 'open' ? 0 : (Number($('rAmt').value) || 0)}; }
+
+/* ---------- timer ---------- */
+const timer = {dur: 300, left: 300, running: false, h: null, end: 0};
+function drawClock(){
+  const s = Math.max(0, Math.ceil(timer.left));
+  $('clock').textContent = `${Math.floor(s / 60)}:${pad(s % 60)}`;
+  $('clock').classList.toggle('done', s === 0);
+  $('tStart').textContent = timer.running ? 'Pause' : (s === 0 ? 'Restart' : 'Start');
+}
+function tick(){ timer.left = (timer.end - Date.now()) / 1000; if (timer.left <= 0){ timer.left = 0; stopTimer(); } drawClock(); }
+function stopTimer(){ timer.running = false; clearInterval(timer.h); timer.h = null; }
+function startPause(){
+  if (timer.running){ tick(); stopTimer(); drawClock(); return; }
+  if (timer.left <= 0) timer.left = timer.dur;
+  timer.end = Date.now() + timer.left * 1000; timer.running = true; timer.h = setInterval(tick, 250); drawClock();
+}
+function resetTimer(){ stopTimer(); timer.left = timer.dur; drawClock(); }
+
+/* ---------- downloads ---------- */
+let dl = null;
+function cardsHTML(){
+  const card = c => {
+    const B = c.role === 'B';
+    const rows = [1, 2, 3, 4, 5, 6].map(i => `<tr><td>${i}</td><td></td><td></td></tr>`).join('');
+    return `<div class="card ${c.role}"><div class="band">${B ? 'Buyer · Packing house' : 'Seller · Orchard'}</div>
+<div class="body"><div class="id">${c.id}</div><div class="num"><span>${B ? 'Your value' : 'Your cost'}</span>$${c.base}<small>per crate</small></div>
+<p>${B ? `You may buy one crate per round. Your profit is <b>$${c.base} minus the price</b>. Never pay more than $${c.base}.` : `You may sell one crate per round. Your profit is <b>the price minus $${c.base}</b>. Never sell for less than $${c.base}.`}
+If the round announces a change, adjust your number for that round only. Keep this card private.</p>
+<table><tr><th>Round</th><th>Price</th><th>Profit</th></tr>${rows}</table></div></div>`;
+  };
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Apple Pit cards</title><style>
+@page{size:letter;margin:0.4in}body{font-family:Archivo,Helvetica,Arial,sans-serif;margin:0;color:#15201A}
+h1{font-size:14px;margin:0 0 10px;color:#536359;font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{border:2px dashed #888;border-radius:6px;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+.band{color:#fff;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:12px;padding:6px 12px}
+.B .band{background:#B3283A}.S .band{background:#1A6482}
+.body{padding:10px 12px;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center}
+.id{font:700 30px/1 Georgia,serif}.B .id{color:#B3283A}.S .id{color:#1A6482}
+.num{font:700 40px/1 Georgia,serif;text-align:right}.num span{display:block;font:600 11px Archivo,Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;color:#536359}
+.num small{font:500 12px Archivo,Arial,sans-serif;color:#536359;margin-left:4px}
+p{grid-column:1/-1;font-size:11.5px;line-height:1.4;margin:4px 0}
+table{grid-column:1/-1;border-collapse:collapse;width:100%;font-size:11px}
+th,td{border:1px solid #bbb;padding:2px 6px;height:18px;text-align:left}
+</style></head><body><h1>Apple Pit · ${state.deck.length} cards · cut along the dashed lines</h1><div class="grid">${state.deck.map(card).join('')}</div></body></html>`;
+}
+function csv(){
+  const lines = ['round,scenario,amount,trade,buyer,seller,price,buyer_value,seller_cost,tax,buyer_profit,seller_profit'];
+  state.rounds.forEach((r, i) => {
+    const P = params(r.sc);
+    r.trades.forEach((t, j) => {
+      const v = state.deck.find(c => c.id === t.b).base + P.dS, c = state.deck.find(c => c.id === t.s).base + P.sS;
+      lines.push([i + 1, r.sc.key, r.sc.amt, j + 1, t.b, t.s, t.p, v, c, P.tax, (v - t.p).toFixed(2), (t.p - c - P.tax).toFixed(2)].join(','));
+    });
+  });
+  return lines.join('\n') + '\n';
+}
+async function offer(filename, data){
+  if (!dl){ $('dlNote').textContent = "Downloads aren't available in this view."; return; }
+  try { await dl.save({filename, data}); $('dlNote').textContent = 'Saved ' + filename + '.'; }
+  catch (err){
+    const code = err && err.code;
+    $('dlNote').textContent = code === 'declined' ? 'Download canceled.' : code === 'rate_limited' ? 'A download prompt is already open.' : "That download didn't go through. Try again in a moment.";
+  }
+}
+
+/* ---------- confirms ---------- */
+function confirmBox(el, text, yesLabel, onYes){
+  el.hidden = false;
+  el.innerHTML = `<div class="confirm"><span>${esc(text)}</span><button class="btn danger small" data-yes>${esc(yesLabel)}</button><button class="btn small ghost" data-no>Keep everything</button></div>`;
+  el.querySelector('[data-yes]').onclick = () => { el.hidden = true; onYes(); };
+  el.querySelector('[data-no]').onclick = () => { el.hidden = true; };
+}
+const totalTrades = () => state.rounds.reduce((a, r) => a + r.trades.length, 0);
+
+/* ---------- wire up ---------- */
+function wire(){
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => { view = b.dataset.view; render(); });
+  $('tradeForm').addEventListener('submit', recordTrade);
+  $('tradeList').addEventListener('click', e => {
+    const d = e.target.closest('[data-del]'); if (!d) return;
+    curRound().trades.splice(+d.dataset.del, 1); save(); render(); say('Trade deleted.', true);
+  });
+  $('undoBtn').onclick = () => { const t = curRound().trades.pop(); if (t){ save(); render(); say(`Removed ${t.b} ← ${t.s} at ${money(t.p)}.`, true); } };
+  $('showPred').onchange = e => { state.showPred = e.target.checked; save(); renderFloor(); };
+  $('openRules').onclick = openRules;
+  $('cancelRules').onclick = () => { $('rulesPanel').hidden = true; };
+  $('rPreset').onchange = () => { $('rAmt').value = defaultAmt($('rPreset').value); updateRulesPreview(); };
+  $('rAmt').oninput = updateRulesPreview;
+  $('startRound').onclick = () => {
+    state.rounds.push({sc: readSc(), trades: []}); state.cur = state.rounds.length - 1;
+    state.showPred = false; state.example = false; save();
+    $('rulesPanel').hidden = true; resetTimer(); render(); say('', true);
+  };
+  $('applyRound').onclick = () => { curRound().sc = readSc(); save(); $('rulesPanel').hidden = true; render(); };
+  $('tStart').onclick = startPause;
+  $('tReset').onclick = resetTimer;
+  $('tDur').onchange = e => { timer.dur = +e.target.value; resetTimer(); };
+  $('roundChips').addEventListener('click', e => { const c = e.target.closest('[data-round]'); if (c){ debriefRound = +c.dataset.round; renderDebrief(); } });
+  $('clearExample').onclick = () => { state = blankState(state.n, state.seed); save(); view = 'floor'; render(); };
+  $('dealBtn').onclick = () => {
+    const n = Math.round(Math.min(80, Math.max(6, Number($('nStudents').value) || 34)));
+    const go = () => { state = blankState(n, (Date.now() % 1e9) | 0); save(); render(); };
+    if (totalTrades() && !state.example) confirmBox($('dealConfirm'), `A new deck erases all ${totalTrades()} recorded trades.`, 'Deal anyway', go); else go();
+  };
+  $('resetBtn').onclick = () => confirmBox($('resetConfirm'), `Erase all ${state.rounds.length} rounds and ${totalTrades()} trades? The deck stays the same.`, 'Erase rounds', () => { state = {...blankState(state.n, state.seed), deck: state.deck}; save(); render(); });
+  $('dlCards').onclick = () => offer('apple-pit-cards.html', cardsHTML());
+  $('dlCsv').onclick = () => offer('apple-pit-results.csv', csv());
+}
+
+function boot(data){
+  state = (data && data.state) || load() || exampleState();
+  if (data && data.view) view = data.view;
+  wire(); drawClock(); render();
+  try { window.claude && window.claude.hot && typeof window.claude.hot.snapshot === 'function' && window.claude.hot.snapshot(() => ({state, view})); } catch (e) {}
+  if (window.claude && typeof window.claude.use === 'function'){
+    window.claude.use('downloads').then(ns => { dl = ns; if (!dl) $('dlNote').textContent = "Downloads aren't available in this view."; }).catch(() => {});
+  }
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+})();
+</script>
+
+</body></html>
