@@ -10,8 +10,10 @@ inside a Streamlit page, and adds two things the HTML file can't do by itself:
   * Working downloads. The "Download printable cards" and "Download results
     (.csv)" buttons save files straight from the game.
 
-Set the passcode in .streamlit/secrets.toml (or the app's Secrets box on
-Streamlit Community Cloud):
+The passcode is "applesgame" out of the box. It only keeps the card list off
+the projector and away from casual clicks; it isn't meant to be secure. To use
+a different one, set it in .streamlit/secrets.toml (or the app's Secrets box
+on Streamlit Community Cloud), which overrides the default:
 
     apple_pit_passcode = "choose-something"
 
@@ -42,12 +44,15 @@ header[data-testid="stHeader"] {background: transparent;}
 # ----------------------------
 # Passcode
 # ----------------------------
+DEFAULT_PASSCODE = "applesgame"
+
+
 def configured_passcode():
     try:
         code = st.secrets.get("apple_pit_passcode")
     except Exception:  # no secrets file at all
         code = None
-    return code or os.environ.get("APPLE_PIT_PASSCODE")
+    return code or os.environ.get("APPLE_PIT_PASSCODE") or DEFAULT_PASSCODE
 
 
 def check_passcode():
@@ -65,15 +70,11 @@ def lock():
     st.session_state.ap_unlocked = False
 
 
-PASSCODE = configured_passcode()
-unlocked = bool(st.session_state.get("ap_unlocked")) or not PASSCODE
+unlocked = bool(st.session_state.get("ap_unlocked"))
 
 with st.sidebar:
     st.markdown("### 🔒 Instructor")
-    if not PASSCODE:
-        st.warning("No passcode is set, so **Setup & cards** is visible to everyone. "
-                   "Add `apple_pit_passcode` to the app's secrets to hide it.")
-    elif unlocked:
+    if unlocked:
         st.success("Unlocked. **Setup & cards** is visible.")
         st.caption("Lock it again before you put this screen on the projector.")
         st.button("Lock", on_click=lock, type="primary")
