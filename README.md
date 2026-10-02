@@ -11,6 +11,10 @@ Pick a game from the sidebar:
   smoothies using a points sheet for their eater type; the instructor tallies by show of
   hands. The debrief shows the budget line, the class demand curve for tacos, and the
   substitution and income effects.
+- **✈️ Paper Airplane Factory**: production and cost. Each group runs a factory with one
+  desk and one pen and adds a worker every round; inspectors count the planes that pass.
+  The debrief turns the class's output into MP, AP, MC, AVC, and ATC, and an optional
+  second run with more capital compares short-run cost curves.
 
 Each game is a self-contained HTML file. `streamlit_app.py` wraps them and adds:
 
@@ -19,7 +23,7 @@ Each game is a self-contained HTML file. `streamlit_app.py` wraps them and adds:
   tables) is hidden. It's a light lock to keep setup details off the projector, not real
   security.
 - **Working downloads** for the printable cards/sheets and the results CSVs.
-- **A link for each game**: add `?game=apples` or `?game=foodtruck` to the app's address.
+- **A link for each game**: add `?game=apples`, `?game=foodtruck`, or `?game=planes` to the app's address.
 
 ## Run it locally
 
@@ -38,7 +42,8 @@ app's **Settings → Secrets**; it overrides the default.
 
 1. Before class, open the sidebar (» at the top left), pick the game, and unlock with
    `applesgame`. On the Setup tab, set the class size and download the printable cards
-   (Apple Pit: **deal a new deck** first) or sheets (Food Truck Friday).
+   (Apple Pit: **deal a new deck** first), sheets (Food Truck Friday), or the factory kit
+   (Paper Airplane Factory).
 2. Lock the app again before you put it on the projector.
 3. Run the rounds on the first tab, use *Next round…* to change the rules or prices, and
    switch to *Debrief* at the end.

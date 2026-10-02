@@ -1,0 +1,759 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Paper Airplane Factory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: projector-first console, sibling to Apple Pit and Food Truck Friday. A shift
+   board announces the crew size, the total-product chart is the hero on the floor,
+   and the production log sits beside the round clock. Debrief turns the log into
+   product and cost curves; setup and the printable kit live on their own tab. */
+:root{
+  --bg:#E9EDF1; --surface:#FAFBFC; --sunk:#DEE4EA; --ink:#17202A; --muted:#55606C; --line:#C8D0D8;
+  --plane:#1F5FA8; --plane-soft:#DCE8F5;
+  --mp:#C2410C; --mp-soft:#F7E0D3;
+  --ap:#1F7A5A; --ap-soft:#D8EEE4;
+  --gold:#A87405; --band:#F0E0B0;
+  --ok:#2C7338; --warn:#9A3F12; --warn-soft:#F7E2D3;
+  --font-display:"Alfa Slab One", "Rockwell", "Roboto Slab", Georgia, serif;
+  --font-body:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1419; --surface:#171E25; --sunk:#11171D; --ink:#E3E9EF; --muted:#9AA6B2; --line:#2B3640;
+    --plane:#6AA6EA; --plane-soft:#16283B; --mp:#F08A55; --mp-soft:#3A2016; --ap:#5CC497; --ap-soft:#15302A;
+    --gold:#E2B13B; --band:#3A3217; --ok:#6CC07A; --warn:#EE8F5C; --warn-soft:#3B2216;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1419; --surface:#171E25; --sunk:#11171D; --ink:#E3E9EF; --muted:#9AA6B2; --line:#2B3640;
+  --plane:#6AA6EA; --plane-soft:#16283B; --mp:#F08A55; --mp-soft:#3A2016; --ap:#5CC497; --ap-soft:#15302A;
+  --gold:#E2B13B; --band:#3A3217; --ok:#6CC07A; --warn:#EE8F5C; --warn-soft:#3B2216;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;padding:0 clamp(16px,3vw,40px);padding-block:0 48px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding-block:18px 14px;border-bottom:2px solid var(--ink)}
+.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.brand h1{font-family:var(--font-display);font-weight:400;font-size:clamp(1.7rem,3vw,2.3rem);line-height:1;margin:0}
+.brand h1 span{color:var(--plane)}
+.brand p{margin:0;color:var(--muted);font-size:.9rem}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{border:1.5px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.92rem}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.banner{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:14px;padding:10px 14px;border-radius:var(--r);background:var(--band);font-size:.92rem}
+.banner.private{background:var(--warn-soft)}
+
+.btn{border:1.5px solid var(--ink);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;line-height:1.2}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--ink);color:var(--bg)}
+.btn.primary:hover{opacity:.88}
+.btn.ghost{border-color:var(--line)}
+.btn.danger{border-color:var(--warn);color:var(--warn)}
+.btn.small{padding:5px 10px;font-size:.85rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* shift board */
+.board{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:12px 22px;margin-top:20px;padding:16px 20px;border:2px solid var(--ink);border-radius:var(--r);background:var(--surface)}
+.cell{font-family:var(--font-display);font-size:.95rem;text-transform:uppercase;letter-spacing:.08em;line-height:1;text-align:center;padding-right:22px;border-right:2px dashed var(--line)}
+.cell b{display:block;font-weight:400;font-size:3.2rem;margin-top:4px}
+.cell.crew b{color:var(--plane)}
+.headline{font-size:clamp(1.15rem,2.2vw,1.6rem);font-weight:700;line-height:1.2;text-wrap:balance;min-width:0}
+.headline small{display:block;font-size:.95rem;font-weight:500;color:var(--muted);margin-top:4px}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.toggle input{width:18px;height:18px;accent-color:var(--gold)}
+
+.panel{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0}
+.panel-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 16px;margin-bottom:8px}
+h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0;font-weight:700}
+h3{font-size:1.02rem;margin:0 0 6px}
+.note{font-size:.88rem;color:var(--muted)}
+
+.rules{margin-top:12px;display:grid;gap:12px}
+.rules-row{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.field input,.field select{border:1.5px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;font-size:1rem;color:var(--ink);min-width:0}
+.rules-preview{font-size:.95rem;color:var(--muted)}
+.rules-preview b{color:var(--ink)}
+
+.floor{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:16px;margin-top:16px}
+.chart svg{display:block;width:100%;height:auto}
+.stack{display:grid;gap:16px;align-content:start;min-width:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;padding:0;overflow:hidden}
+.stat{padding:12px 16px;border-bottom:1.5px solid var(--line)}
+.stat:nth-child(odd){border-right:1.5px solid var(--line)}
+.stat:nth-last-child(-n+2){border-bottom:0}
+.stat .k{font-size:.75rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.stat .v{font-family:var(--font-display);font-size:clamp(1.6rem,2.8vw,2.3rem);line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .v.plane{color:var(--plane)} .stat .v.mp{color:var(--mp)} .stat .v.ap{color:var(--ap)}
+.stat .v.dim{color:var(--muted);font-family:var(--font-body);font-size:1rem;font-weight:600;padding-block:10px}
+.timer{text-align:center}
+.clock{font-family:var(--font-display);font-size:clamp(3rem,6vw,4.4rem);line-height:1;font-variant-numeric:tabular-nums;margin:6px 0 12px}
+.clock.done{color:var(--warn);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.clock.done{animation:none}}
+.timer-ctl{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center}
+.timer-ctl select{border:1.5px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 8px}
+
+/* production log */
+.logwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:middle}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td.num,th.num{text-align:right}
+.log td{padding:4px 4px}
+.log th{padding:6px 4px}
+.log input{width:3.3em;border:1.5px solid var(--line);background:var(--bg);border-radius:6px;padding:4px 6px;font-family:var(--font-mono);font-size:1.05rem;text-align:right}
+.log input:focus{border-color:var(--plane)}
+.log tr.now td{background:var(--plane-soft)}
+.log td.L{font-family:var(--font-mono);font-weight:600}
+.log .avg{font-family:var(--font-mono);font-weight:600;color:var(--plane)}
+.log .mpc{font-family:var(--font-mono);color:var(--mp);font-weight:600}
+.log .apc{font-family:var(--font-mono);color:var(--ap);font-weight:600}
+.log-ctl{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+.warn{color:var(--warn);font-weight:600;font-size:.9rem;min-height:1.4em;margin-top:6px}
+
+/* debrief */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:20px;align-items:center}
+.chip{border:1.5px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.9rem}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;margin-top:14px;align-items:start}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+.legend b{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.tile .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.tile .v{font-family:var(--font-display);font-size:1.5rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .s{font-size:.82rem;color:var(--muted)}
+.prompts{margin:0;padding-left:1.2em;display:grid;gap:8px;max-width:65ch}
+.costs td,.costs th{padding:5px 7px;font-size:.88rem;white-space:nowrap}
+.costs .mc{color:var(--mp);font-weight:700} .costs .atc{color:var(--plane);font-weight:700} .costs .avc{color:var(--ap);font-weight:700}
+.costs tr.min td{background:var(--band)}
+.halo{paint-order:stroke;stroke:var(--surface);stroke-width:5px;stroke-linejoin:round}
+.inline{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end}
+.inline .field input{width:6.5em}
+
+/* setup */
+.setup{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.steps{margin:0;padding-left:1.3em;display:grid;gap:10px;max-width:68ch}
+.spec{margin:10px 0 0;padding-left:1.3em;display:grid;gap:4px;font-size:.92rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--warn-soft);margin-top:10px}
+
+@media (max-width:960px){ .floor,.grid2,.setup{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:640px){
+  .board{grid-template-columns:1fr 1fr}
+  .cell{border-right:0;padding:0;text-align:left}
+  .cell b{display:inline;font-size:2rem;margin-left:8px}
+  .headline,.ctl{grid-column:1/-1}
+  .tiles{grid-template-columns:1fr}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Paper Airplane <span>Factory</span></h1>
+      <p>A production and cost game for the short run</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Screens">
+      <button class="tab" role="tab" id="tab-floor" data-view="floor" aria-selected="true">Factory floor</button>
+      <button class="tab" role="tab" id="tab-debrief" data-view="debrief" aria-selected="false">Debrief</button>
+      <button class="tab" role="tab" id="tab-setup" data-view="setup" aria-selected="false">Setup &amp; sheets</button>
+    </nav>
+  </header>
+
+  <div class="banner" id="exampleBanner" hidden>
+    <span><b>Example data.</b> A sample class with four factories is loaded so you can see how each screen works.</span>
+    <button class="btn small" id="clearExample">Clear examples and start with 1 worker</button>
+  </div>
+
+  <!-- FACTORY FLOOR -->
+  <section id="view-floor">
+    <div class="board">
+      <div class="cell">Run<b id="runNo">1</b></div>
+      <div class="cell crew">Workers<b id="crewNo">1</b></div>
+      <div class="headline" id="runHead"></div>
+      <div class="ctl">
+        <button class="btn primary" id="addWorker">Add a worker</button>
+        <button class="btn" id="openRun">New run…</button>
+        <label class="toggle"><input type="checkbox" id="showMP"> Show MP &amp; AP</label>
+      </div>
+    </div>
+
+    <div class="panel rules" id="runPanel" hidden>
+      <div class="panel-h"><h2 id="runTitle">Run 2</h2></div>
+      <div class="rules-row">
+        <label class="field">Capital per factory
+          <select id="rCap">
+            <option value="1">1 table, 1 pen</option>
+            <option value="2">2 tables, 2 pens</option>
+            <option value="3">3 tables, 3 pens</option>
+          </select>
+        </label>
+        <div class="row">
+          <button class="btn primary" id="startRun">Start run 2</button>
+          <button class="btn ghost" id="cancelRun">Cancel</button>
+        </div>
+      </div>
+      <div class="rules-preview" id="runPreview"></div>
+    </div>
+
+    <div class="floor">
+      <div class="stack">
+        <div class="panel chart">
+          <div class="panel-h"><h2>Planes that passed inspection</h2><span class="note" id="tpNote"></span></div>
+          <div id="tpChart"></div>
+          <div class="legend"><span><i style="border-color:var(--plane)"></i>Average across factories</span><span><b style="background:var(--muted);border-radius:50%"></b>Each factory</span></div>
+        </div>
+        <div class="panel chart" id="mpPanel" hidden>
+          <div class="panel-h"><h2>Marginal and average product</h2><span class="note">Planes per worker</span></div>
+          <div id="mpChart"></div>
+          <div class="legend"><span><b style="background:var(--mp)"></b>MP: planes added by the last worker</span><span><i style="border-color:var(--ap)"></i>AP: planes per worker</span></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel stats" id="stats"></div>
+        <div class="panel timer">
+          <h2>Round clock</h2>
+          <div class="clock" id="clock">1:00</div>
+          <div class="timer-ctl">
+            <button class="btn primary" id="tStart">Start</button>
+            <button class="btn" id="tReset">Reset</button>
+            <label for="tDur" style="position:absolute;left:-9999px">Round length</label>
+            <select id="tDur">
+              <option value="45">45 sec</option><option value="60" selected>1 min</option>
+              <option value="90">90 sec</option><option value="120">2 min</option>
+            </select>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>Production log</h2><span class="note">Planes passed, by factory</span></div>
+          <div class="logwrap" id="log"></div>
+          <div class="log-ctl">
+            <button class="btn small" id="addWorker2">Add a worker</button>
+            <button class="btn small ghost" id="removeRow">Remove last row</button>
+          </div>
+          <div class="warn" id="logWarn" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEBRIEF -->
+  <section id="view-debrief" hidden>
+    <div class="chips" id="runChips"></div>
+    <div class="grid2">
+      <div class="stack">
+        <div class="panel chart">
+          <div class="panel-h"><h2 id="costTitle">Cost per plane</h2><span class="note" id="costNote"></span></div>
+          <div id="costChart"></div>
+          <div class="legend" id="costLegend"></div>
+        </div>
+        <div class="panel chart">
+          <div class="panel-h"><h2>Marginal and average product</h2><span class="note">Average across factories</span></div>
+          <div id="prodChart"></div>
+          <div class="legend"><span><b style="background:var(--mp)"></b>Marginal product</span><span><i style="border-color:var(--ap)"></i>Average product</span></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <div class="panel-h"><h2>Costs this run</h2></div>
+          <div class="inline">
+            <label class="field">Wage per worker, per round ($)<input id="dWage" type="number" min="0" step="1"></label>
+            <label class="field">Rent per table, per round ($)<input id="dRent" type="number" min="0" step="1"></label>
+          </div>
+          <p class="note" id="fcNote" style="margin:8px 0 0"></p>
+        </div>
+        <div class="panel"><div class="panel-h"><h2>What the data shows</h2></div><div class="tiles" id="tiles"></div></div>
+        <div class="panel"><div class="panel-h"><h2>Ask the class</h2></div><ol class="prompts" id="prompts"></ol></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-h"><h2>Cost table</h2><span class="note">Gold row: lowest average total cost</span></div>
+      <div class="logwrap" id="costTable"></div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="view-setup" hidden>
+    <div class="banner private"><span><b>Instructor setup.</b> Factory count, costs, the printable kit, and the results file.</span></div>
+    <div class="setup">
+      <div class="panel">
+        <div class="panel-h"><h2>Factories and costs</h2></div>
+        <div class="rules-row">
+          <label class="field">Factories (groups)
+            <select id="nFact"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option></select>
+          </label>
+          <label class="field">Wage per worker ($)<input id="sWage" type="number" min="0" step="1" style="width:6.5em"></label>
+          <label class="field">Rent per table ($)<input id="sRent" type="number" min="0" step="1" style="width:6.5em"></label>
+        </div>
+        <p class="note" id="setupNote"></p>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="dlKit">Download printable kit</button>
+          <button class="btn" id="dlCsv">Download results (.csv)</button>
+        </div>
+        <p class="note" id="dlNote"></p>
+        <h3 style="margin-top:16px">The standard plane</h3>
+        <ol class="spec">
+          <li>Fold a half sheet in half the long way, then open it.</li>
+          <li>Fold the two top corners to the center crease.</li>
+          <li>Fold the new slanted edges to the center crease again.</li>
+          <li>Fold the plane in half along the crease, then fold each wing down.</li>
+          <li>Draw the factory's star on both wings with the factory pen.</li>
+        </ol>
+        <p class="note" style="margin-top:8px">A plane passes inspection if it matches the spec, has both stars, and glides past the inspector's line.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>Running the game</h2></div>
+        <ol class="steps">
+          <li><b>Before class.</b> Pick the number of factories (one per group of 6 to 9 students) and download the printable kit. Each factory gets one desk, one pen, a stack of half sheets, and a tape line on the floor about 10 feet away.</li>
+          <li><b>Roles.</b> In each group, one student is the inspector and one is the timekeeper. Everyone else waits to be hired.</li>
+          <li><b>Rules, 3 minutes.</b> Only workers on the clock may touch paper or the pen. Every plane must match the spec and carry a star on both wings. The inspector rejects anything else. Unfinished planes at the bell don't count.</li>
+          <li><b>Rounds.</b> Start with 1 worker per factory and run the clock. Inspectors report the planes that passed, and you type them into the production log. Clear the desk, add one worker per factory, and repeat up to about 8 workers.</li>
+          <li><b>More capital (optional).</b> Start a new run with 2 tables and 2 pens and repeat a few crew sizes. The cost curves for both runs appear together on the Debrief tab.</li>
+          <li><b>Debrief.</b> Have students compute MP, AP, MC, and ATC on the cost worksheet first. Then reveal the curves and the cost table on the Debrief tab.</li>
+        </ol>
+        <p class="note" style="margin-top:14px">The log is saved in this browser only, so a refresh won't lose a round. Nothing about individual students is recorded.</p>
+        <div class="row" style="margin-top:12px"><button class="btn danger" id="resetBtn">Erase all runs</button></div>
+        <div id="resetConfirm" hidden></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+const KEY = 'planefactory.v1';
+const LET = 'ABCDEF';
+const MAXF = 6;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const money = v => v == null || !isFinite(v) ? '–' : '$' + v.toFixed(2);
+const dollars = v => Number.isInteger(v) ? '$' + v : '$' + v.toFixed(2);
+const f1 = v => v == null || !isFinite(v) ? '–' : v.toFixed(1);
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const capLabel = k => k === 1 ? '1 table, 1 pen' : `${k} tables, ${k} pens`;
+
+/* ---------- state ---------- */
+let state;
+const blankRow = () => ({q: Array(MAXF).fill(null)});
+const blankRun = cap => ({capital: cap, rows: [blankRow()]});
+function blankState(){ return {factories: 4, wage: 12, rent: 20, runs: [blankRun(1)], cur: 0, showMP: false, example: false}; }
+function exampleState(){
+  const s = blankState(); s.example = true;
+  const rnd = mulberry32(42);
+  const shape1 = [4, 9, 15, 19, 22, 24, 25, 24];
+  s.runs[0].rows = shape1.map(m => ({q: Array.from({length: MAXF}, (_, f) => f < 4 ? Math.max(0, Math.round(m * (0.82 + rnd() * 0.36))) : null)}));
+  s.runs.push({capital: 2, rows: [5, 11, 18, 25, 31, 36, 39, 41].map(m => ({q: Array.from({length: MAXF}, (_, f) => f < 4 ? Math.max(0, Math.round(m * (0.85 + rnd() * 0.3))) : null)}))});
+  s.runs[1].rows = s.runs[1].rows.slice(0, 6);
+  s.cur = 0;
+  return s;
+}
+function load(){ try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); return s && s.runs && s.runs.length ? s : null; } catch (e) { return null; } }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+const curRun = () => state.runs[state.cur];
+
+/* ---------- analysis ---------- */
+function analyze(run){
+  const F = state.factories, w = state.wage, FC = state.rent * run.capital;
+  let prevQ = 0;
+  const rows = run.rows.map((r, i) => {
+    const L = i + 1;
+    const vals = r.q.slice(0, F).filter(v => v != null && isFinite(v));
+    const Q = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    const out = {L, vals, n: vals.length, Q, MP: null, AP: null, FC, VC: w * L, TC: FC + w * L, MC: null, mcQ: null, AFC: null, AVC: null, ATC: null};
+    if (Q == null){ prevQ = null; return out; }
+    out.AP = Q / L;
+    if (prevQ != null){ out.MP = Q - prevQ; out.mcQ = (prevQ + Q) / 2; out.MC = out.MP > 0 ? w / out.MP : null; }
+    if (Q > 0){ out.AFC = FC / Q; out.AVC = w * L / Q; out.ATC = (FC + w * L) / Q; }
+    prevQ = Q;
+    return out;
+  });
+  const done = rows.filter(r => r.Q != null);
+  const withMP = rows.filter(r => r.MP != null);
+  const peak = withMP.length ? withMP.reduce((a, b) => b.MP > a.MP ? b : a) : null;
+  const dim = peak ? withMP.find(r => r.L > peak.L && r.MP < peak.MP) : null;
+  const withATC = rows.filter(r => r.ATC != null);
+  const minATC = withATC.length ? withATC.reduce((a, b) => b.ATC < a.ATC ? b : a) : null;
+  const maxAP = done.length ? done.reduce((a, b) => b.AP > a.AP ? b : a) : null;
+  let cross = null;
+  for (let i = 1; i < rows.length; i++){
+    const r = rows[i];
+    if (r.ATC != null && (r.MC == null && r.MP != null && r.MP <= 0 || r.MC != null && r.MC > r.ATC)){ cross = r; break; }
+  }
+  return {rows, done, peak, dim, minATC, maxAP, cross, FC};
+}
+
+/* ---------- charts ---------- */
+const fs = s => `font-size="${s}"`;
+function niceStep(range, target){ const raw = range / target, p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p; }
+function niceMax(v, target){ const st = niceStep(v || 1, target || 5); return {max: Math.ceil((v || 1) / st) * st, step: st}; }
+function frame(W, H, m, xs, ys, x, y, xl, yl, xfmt, yfmt){
+  let s = '';
+  ys.forEach(v => {
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>`;
+    s += `<text x="${m.l - 8}" y="${y(v) + 5}" text-anchor="end" ${fs(13)} fill="var(--muted)">${yfmt ? yfmt(v) : v}</text>`;
+  });
+  xs.forEach(v => { s += `<text x="${x(v)}" y="${H - m.b + 22}" text-anchor="middle" ${fs(13)} fill="var(--muted)">${xfmt ? xfmt(v) : v}</text>`; });
+  s += `<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${H - m.b}" stroke="var(--muted)" stroke-width="1.5"/>`;
+  s += `<text x="${m.l + (W - m.l - m.r) / 2}" y="${H - 6}" text-anchor="middle" ${fs(13)} fill="var(--muted)" font-weight="600">${xl}</text>`;
+  s += `<text transform="translate(16 ${m.t + (H - m.t - m.b) / 2}) rotate(-90)" text-anchor="middle" ${fs(13)} fill="var(--muted)" font-weight="600">${yl}</text>`;
+  return s;
+}
+const range = (a, b, st) => { const out = []; for (let v = a; v <= b + 1e-9; v += st) out.push(+v.toFixed(6)); return out; };
+
+function tpSVG(run, a, hiL){
+  const W = 760, H = 420, m = {l: 56, r: 24, t: 20, b: 52};
+  const X = Math.max(8, run.rows.length);
+  const top = Math.max(10, ...a.rows.flatMap(r => r.vals));
+  const {max: Y, step} = niceMax(top * 1.08, 5);
+  const x = v => m.l + v / (X + 0.5) * (W - m.l - m.r), y = v => H - m.b - v / Y * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Planes that passed inspection at each crew size">`;
+  s += frame(W, H, m, range(0, X, 1), range(0, Y, step), x, y, 'Workers per factory', 'Planes per round');
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}" stroke="var(--muted)" stroke-width="1.5"/>`;
+  if (hiL) s += `<rect x="${x(hiL) - 18}" y="${m.t}" width="36" height="${H - m.t - m.b}" fill="var(--plane-soft)" opacity="0.8"/>`;
+  a.rows.forEach(r => {
+    r.vals.forEach((v, j) => {
+      const dx = (j - (r.vals.length - 1) / 2) * 6;
+      s += `<circle cx="${x(r.L) + dx}" cy="${y(v)}" r="4.5" fill="var(--muted)" opacity="0.55"/>`;
+    });
+  });
+  const pts = [[0, 0]].concat(a.rows.filter(r => r.Q != null).map(r => [r.L, r.Q]));
+  if (pts.length > 1){
+    s += `<polyline points="${pts.map(p => x(p[0]) + ',' + y(p[1])).join(' ')}" fill="none" stroke="var(--plane)" stroke-width="3.5" stroke-linejoin="round"/>`;
+    pts.slice(1).forEach(p => { s += `<circle cx="${x(p[0])}" cy="${y(p[1])}" r="7" fill="var(--plane)" stroke="var(--surface)" stroke-width="2"/>`; });
+    const last = pts[pts.length - 1];
+    const anchor = last[0] > X * 0.75 ? 'end' : 'start', dx = anchor === 'end' ? -12 : 12;
+    s += `<text x="${x(last[0]) + dx}" y="${y(last[1]) - 14}" text-anchor="${anchor}" ${fs(20)} font-weight="700" fill="var(--plane)" style="font-family:var(--font-display)">${f1(last[1])}</text>`;
+  } else {
+    s += `<text x="${m.l + (W - m.l - m.r) / 2}" y="${m.t + (H - m.t - m.b) / 2}" text-anchor="middle" ${fs(20)} fill="var(--muted)">Waiting for the first round</text>`;
+  }
+  return s + '</svg>';
+}
+
+function mpSVG(run, a, opts){
+  const W = 760, H = opts && opts.h || 300, m = {l: 56, r: 24, t: 20, b: 52};
+  const X = Math.max(8, run.rows.length);
+  const vals = a.rows.flatMap(r => [r.MP, r.AP]).filter(v => v != null);
+  const lo = Math.min(0, ...vals), hi = Math.max(4, ...vals);
+  const st = niceStep(hi - lo, 5);
+  const Y0 = Math.floor(lo / st) * st, Y1 = Math.ceil(hi * 1.05 / st) * st;
+  const x = v => m.l + v / (X + 0.5) * (W - m.l - m.r), y = v => H - m.b - (v - Y0) / (Y1 - Y0) * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Marginal and average product of labor">`;
+  s += frame(W, H, m, range(1, X, 1), range(Y0, Y1, st), x, y, 'Workers per factory', 'Planes per worker');
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}" stroke="var(--muted)" stroke-width="1.5"/>`;
+  const bw = Math.min(30, (W - m.l - m.r) / (X + 1) * 0.5);
+  a.rows.forEach(r => {
+    if (r.MP == null) return;
+    const y1 = y(Math.max(0, r.MP)), y2 = y(Math.min(0, r.MP));
+    s += `<rect x="${x(r.L) - bw / 2}" y="${y1}" width="${bw}" height="${Math.max(1, y2 - y1)}" rx="3" fill="var(--mp)" opacity="0.9"/>`;
+    s += `<text x="${x(r.L)}" y="${r.MP >= 0 ? y1 - 6 : y2 + 16}" text-anchor="middle" ${fs(13)} font-weight="700" fill="var(--mp)">${f1(r.MP)}</text>`;
+  });
+  const ap = a.rows.filter(r => r.AP != null);
+  if (ap.length){
+    s += `<polyline points="${ap.map(r => x(r.L) + ',' + y(r.AP)).join(' ')}" fill="none" stroke="var(--ap)" stroke-width="3" stroke-linejoin="round"/>`;
+    ap.forEach(r => { s += `<circle cx="${x(r.L)}" cy="${y(r.AP)}" r="5.5" fill="var(--ap)" stroke="var(--surface)" stroke-width="2"/>`; });
+  }
+  return s + '</svg>';
+}
+
+function costSVG(run, a, other){
+  const W = 760, H = 440, m = {l: 62, r: 24, t: 22, b: 52};
+  const series = r => r.rows;
+  const cand = [];
+  a.rows.forEach(r => { if (r.L >= 2){ if (r.ATC != null) cand.push(r.ATC); if (r.MC != null) cand.push(r.MC); } });
+  if (!cand.length) a.rows.forEach(r => { if (r.ATC != null) cand.push(r.ATC); });
+  const lowATC = a.minATC ? a.minATC.ATC : 1;
+  const yTop = Math.min(Math.max(...cand, 1), lowATC * 4);
+  const {max: Y, step} = niceMax(yTop * 1.1, 5);
+  const Qs = a.rows.filter(r => r.Q != null).map(r => r.Q).concat(other ? other.a.rows.filter(r => r.Q != null).map(r => r.Q) : []);
+  const {max: X, step: xst} = niceMax(Math.max(10, ...Qs) * 1.05, 6);
+  const x = v => m.l + v / X * (W - m.l - m.r), y = v => H - m.b - v / Y * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Marginal, average variable, average fixed and average total cost per plane">`;
+  s += frame(W, H, m, range(0, X, xst), range(0, Y, step), x, y, 'Planes per round (average factory)', 'Dollars per plane', null, v => '$' + v);
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}" stroke="var(--muted)" stroke-width="1.5"/>`;
+  s += `<defs><clipPath id="cplot"><rect x="${m.l}" y="${m.t - 2}" width="${W - m.l - m.r}" height="${H - m.t - m.b + 2}"/></clipPath></defs><g clip-path="url(#cplot)">`;
+  const line = (pts, color, width, dash, op) => pts.length > 1 ? `<polyline points="${pts.map(p => x(p[0]) + ',' + y(p[1])).join(' ')}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linejoin="round"${dash ? ` stroke-dasharray="${dash}"` : ''}${op ? ` opacity="${op}"` : ''}/>` : '';
+  const dots = (pts, color, r) => pts.map(p => `<circle cx="${x(p[0])}" cy="${y(p[1])}" r="${r}" fill="${color}" stroke="var(--surface)" stroke-width="2"/>`).join('');
+  if (other){
+    const op = other.a.rows.filter(r => r.ATC != null).map(r => [r.Q, r.ATC]);
+    s += line(op, 'var(--plane)', 2.5, '7 6', 0.55);
+  }
+  const afc = a.rows.filter(r => r.AFC != null).map(r => [r.Q, r.AFC]);
+  const avc = a.rows.filter(r => r.AVC != null).map(r => [r.Q, r.AVC]);
+  const atc = a.rows.filter(r => r.ATC != null).map(r => [r.Q, r.ATC]);
+  const mc = a.rows.filter(r => r.MC != null && r.mcQ != null).map(r => [r.mcQ, r.MC]);
+  s += line(afc, 'var(--muted)', 2, '3 5');
+  s += line(avc, 'var(--ap)', 3) + dots(avc, 'var(--ap)', 4.5);
+  s += line(atc, 'var(--plane)', 3.5) + dots(atc, 'var(--plane)', 5);
+  s += line(mc, 'var(--mp)', 3.5) + dots(mc, 'var(--mp)', 5.5);
+  s += '</g>';
+  if (a.minATC){
+    const r = a.minATC;
+    s += `<circle cx="${x(r.Q)}" cy="${y(r.ATC)}" r="12" fill="none" stroke="var(--gold)" stroke-width="3"/>`;
+    s += `<text class="halo" x="${x(r.Q)}" y="${y(r.ATC) - 22}" text-anchor="middle" ${fs(15)} font-weight="700" fill="var(--gold)">Lowest ATC ${money(r.ATC)}</text>`;
+  }
+  const lab = (pts, text, color) => { if (!pts.length) return ''; const p = pts[pts.length - 1]; if (p[1] > Y) return ''; return `<text class="halo" x="${Math.min(x(p[0]) + 10, W - m.r - 4)}" y="${y(p[1]) - 8}" text-anchor="${x(p[0]) + 60 > W - m.r ? 'end' : 'start'}" ${fs(14)} font-weight="700" fill="${color}">${text}</text>`; };
+  s += lab(mc, 'MC', 'var(--mp)') + lab(atc, 'ATC', 'var(--plane)') + lab(avc, 'AVC', 'var(--ap)') + lab(afc, 'AFC', 'var(--muted)');
+  if (!atc.length) s += `<text x="${W / 2}" y="${m.t + 40}" text-anchor="middle" ${fs(16)} fill="var(--muted)">Cost curves appear once the log has data</text>`;
+  return s + '</svg>';
+}
+
+/* ---------- render ---------- */
+let view = 'floor', dRun = null;
+
+function headline(run){
+  return run.capital === 1
+    ? ['Short run: one table, one pen', 'Capital is fixed. Each round, every factory hires one more worker.']
+    : [`More capital: ${capLabel(run.capital)}`, 'Same rules, more room to work. Hire one more worker each round.'];
+}
+
+function renderLog(){
+  const run = curRun(), a = analyze(run), F = state.factories, P = state.showMP;
+  const head = `<tr><th>Workers</th>${Array.from({length: F}, (_, f) => `<th class="num">${LET[f]}</th>`).join('')}<th class="num">Avg</th>${P ? '<th class="num">MP</th><th class="num">AP</th>' : ''}</tr>`;
+  const body = run.rows.map((r, i) => {
+    const ar = a.rows[i];
+    const cells = Array.from({length: F}, (_, f) => `<td class="num"><input id="q${i}_${f}" data-i="${i}" data-f="${f}" type="number" min="0" step="1" inputmode="numeric" value="${r.q[f] ?? ''}" aria-label="Factory ${LET[f]}, ${i + 1} workers"></td>`).join('');
+    return `<tr class="${i === run.rows.length - 1 ? 'now' : ''}"><td class="L">${i + 1}</td>${cells}<td class="num avg">${f1(ar.Q)}</td>${P ? `<td class="num mpc">${f1(ar.MP)}</td><td class="num apc">${f1(ar.AP)}</td>` : ''}</tr>`;
+  }).join('');
+  $('log').innerHTML = `<table class="log"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  $('removeRow').disabled = run.rows.length <= 1;
+}
+
+function renderFloorLive(){
+  const run = curRun(), a = analyze(run), P = state.showMP;
+  const L = run.rows.length, r = a.rows[L - 1];
+  $('tpChart').innerHTML = tpSVG(run, a, L);
+  $('tpNote').textContent = `${state.factories} ${state.factories === 1 ? 'factory' : 'factories'}`;
+  $('mpPanel').hidden = !P;
+  if (P) $('mpChart').innerHTML = mpSVG(run, a);
+  const hid = '<span class="v dim">Hidden</span>';
+  $('stats').innerHTML = [
+    ['Workers', `<div class="v plane">${L}</div>`],
+    ['Avg planes', `<div class="v">${f1(r.Q)}</div>`],
+    ['Added by worker ' + L, P ? `<div class="v mp">${f1(r.MP)}</div>` : hid],
+    ['Planes per worker', P ? `<div class="v ap">${f1(r.AP)}</div>` : hid]
+  ].map(([k, v]) => `<div class="stat"><div class="k">${esc(k)}</div>${v}</div>`).join('');
+  const missing = run.rows.map((row, i) => row.q.slice(0, state.factories).filter(v => v == null).length ? i + 1 : null).filter(Boolean);
+  const gaps = missing.filter(n => n < L);
+  $('logWarn').textContent = gaps.length ? `Some factories have no count for ${gaps.length === 1 ? 'crew size' : 'crew sizes'} ${gaps.join(', ')}. Averages use the factories that reported.` : '';
+  $('addWorker').disabled = $('addWorker2').disabled = r.n === 0;
+  $('addWorker').title = r.n === 0 ? 'Enter at least one factory\'s planes for this crew size first.' : '';
+}
+
+function renderFloor(){
+  const run = curRun();
+  $('runNo').textContent = state.cur + 1;
+  $('crewNo').textContent = run.rows.length;
+  const [h1, h2] = headline(run);
+  $('runHead').innerHTML = `${esc(h1)}<small>${esc(h2)}</small>`;
+  $('showMP').checked = !!state.showMP;
+  renderLog();
+  renderFloorLive();
+}
+
+function prompts(run, a, other){
+  const p = [];
+  if (a.peak) p.push(`Worker ${a.peak.L} added the most planes (${f1(a.peak.MP)}). Why did the workers after that add fewer, with the same desk and pen?`);
+  else p.push('What do you expect the second worker to add compared with the first? Why?');
+  p.push('Look at MP and MC side by side. When MP rises, MC falls. Why does the cost of one more plane depend on how productive the last worker was?');
+  p.push('Where does MC cross ATC? Why does it have to cross at the lowest point of ATC?');
+  if (a.rows.some(r => r.MP != null && r.MP <= 0)) p.push('One worker added nothing, or even lowered output. What was happening at the desk? Would a firm ever hire that worker?');
+  if (other) p.push(`Compare this run with run ${other.i + 1}. At the same number of planes, which setup made them more cheaply? What does that say about choosing the size of the factory in the long run?`);
+  else p.push('If the factory got a second desk and pen, how would the product curves change? Which costs would rise and which would fall?');
+  return p;
+}
+
+function renderDebrief(){
+  if (dRun == null || dRun >= state.runs.length) dRun = state.cur;
+  $('runChips').innerHTML = '<span class="note" style="margin-right:6px">Run</span>' + state.runs.map((r, i) =>
+    `<button class="chip" data-run="${i}" aria-pressed="${i === dRun}">${i + 1} · ${capLabel(r.capital)}</button>`).join('');
+  const run = state.runs[dRun], a = analyze(run);
+  const oi = state.runs.findIndex((r, i) => i !== dRun && r.capital !== run.capital && analyze(r).done.length > 1);
+  const other = oi >= 0 ? {i: oi, a: analyze(state.runs[oi]), run: state.runs[oi]} : null;
+  $('dWage').value = state.wage; $('dRent').value = state.rent;
+  $('fcNote').textContent = `Fixed cost this run: ${capLabel(run.capital)} × ${dollars(state.rent)} = ${dollars(a.FC)} per round. Variable cost: ${dollars(state.wage)} per worker.`;
+  $('costTitle').textContent = `Cost per plane, run ${dRun + 1}`;
+  $('costNote').textContent = capLabel(run.capital);
+  $('costChart').innerHTML = costSVG(run, a, other);
+  $('costLegend').innerHTML = `<span><i style="border-color:var(--mp)"></i>MC: wage ÷ MP</span><span><i style="border-color:var(--plane)"></i>ATC</span><span><i style="border-color:var(--ap)"></i>AVC</span><span><i style="border-color:var(--muted);border-top-style:dotted"></i>AFC</span>` +
+    (other ? `<span><i style="border-color:var(--plane);border-top-style:dashed;opacity:.6"></i>ATC with ${capLabel(other.run.capital)} (run ${other.i + 1})</span>` : '');
+  $('prodChart').innerHTML = mpSVG(run, a, {h: 280});
+  const tiles = [
+    ['Biggest MP', a.peak ? f1(a.peak.MP) : '–', a.peak ? `Worker ${a.peak.L}` : 'Needs two crew sizes'],
+    ['Diminishing returns', a.dim ? `Worker ${a.dim.L}` : '–', a.dim ? 'First worker to add less than the one before' : 'Not yet in the data'],
+    ['Lowest ATC', a.minATC ? money(a.minATC.ATC) : '–', a.minATC ? `${a.minATC.L} workers, ${f1(a.minATC.Q)} planes` : ''],
+    ['MC passes ATC', a.cross ? `Worker ${a.cross.L}` : '–', a.cross ? `Near ${f1(a.cross.Q)} planes` : 'Not yet in the data']
+  ];
+  $('tiles').innerHTML = tiles.map(([k, v, s]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+  $('prompts').innerHTML = prompts(run, a, other).map(p => `<li>${esc(p)}</li>`).join('');
+  const rows = a.rows.filter(r => r.Q != null).map(r => `<tr class="${a.minATC && r.L === a.minATC.L ? 'min' : ''}"><td>${r.L}</td><td class="num">${f1(r.Q)}</td><td class="num">${f1(r.MP)}</td><td class="num">${f1(r.AP)}</td><td class="num">${dollars(r.FC)}</td><td class="num">${dollars(r.VC)}</td><td class="num">${dollars(r.TC)}</td><td class="num mc">${r.MP != null && r.MP <= 0 ? 'none added' : money(r.MC)}</td><td class="num">${money(r.AFC)}</td><td class="num avc">${money(r.AVC)}</td><td class="num atc">${money(r.ATC)}</td></tr>`).join('');
+  $('costTable').innerHTML = `<table class="costs"><thead><tr><th>Workers</th><th class="num">Planes</th><th class="num">MP</th><th class="num">AP</th><th class="num">FC</th><th class="num">VC</th><th class="num">TC</th><th class="num">MC</th><th class="num">AFC</th><th class="num">AVC</th><th class="num">ATC</th></tr></thead><tbody>${rows || '<tr><td colspan="11" class="note">No rounds recorded yet.</td></tr>'}</tbody></table>`;
+}
+
+function renderSetup(){
+  $('nFact').value = String(state.factories);
+  $('sWage').value = state.wage; $('sRent').value = state.rent;
+  $('setupNote').textContent = `${state.runs.length} ${state.runs.length === 1 ? 'run' : 'runs'} recorded. With ${state.factories} factories, plan on roughly ${state.factories * 6}–${state.factories * 9} students.`;
+}
+
+function render(){
+  ['floor', 'debrief', 'setup'].forEach(v => { $('view-' + v).hidden = v !== view; $('tab-' + v).setAttribute('aria-selected', String(v === view)); });
+  $('exampleBanner').hidden = !state.example;
+  if (view === 'floor') renderFloor();
+  if (view === 'debrief') renderDebrief();
+  if (view === 'setup') renderSetup();
+}
+
+/* ---------- timer ---------- */
+const timer = {dur: 60, left: 60, running: false, h: null, end: 0};
+const pad = n => String(n).padStart(2, '0');
+function drawClock(){
+  const s = Math.max(0, Math.ceil(timer.left));
+  $('clock').textContent = `${Math.floor(s / 60)}:${pad(s % 60)}`;
+  $('clock').classList.toggle('done', s === 0);
+  $('tStart').textContent = timer.running ? 'Pause' : (s === 0 ? 'Restart' : 'Start');
+}
+function tick(){ timer.left = (timer.end - Date.now()) / 1000; if (timer.left <= 0){ timer.left = 0; stopTimer(); } drawClock(); }
+function stopTimer(){ timer.running = false; clearInterval(timer.h); timer.h = null; }
+function startPause(){
+  if (timer.running){ tick(); stopTimer(); drawClock(); return; }
+  if (timer.left <= 0) timer.left = timer.dur;
+  timer.end = Date.now() + timer.left * 1000; timer.running = true; timer.h = setInterval(tick, 250); drawClock();
+}
+function resetTimer(){ stopTimer(); timer.left = timer.dur; drawClock(); }
+
+/* ---------- downloads ---------- */
+let dl = null;
+function kitHTML(){
+  const F = state.factories, maxL = 10;
+  const spec = `<ol class="spec"><li>Fold a half sheet in half the long way, then open it.</li><li>Fold the two top corners to the center crease.</li><li>Fold the new slanted edges to the center crease again.</li><li>Fold the plane in half along the crease, then fold each wing down.</li><li>Draw the factory's star on both wings with the factory pen.</li></ol>`;
+  const rules = `<ul class="rules"><li>Only workers on the clock may touch paper or the pen.</li><li>One desk and one pen per factory unless the instructor says otherwise.</li><li>A plane passes if it matches the spec, has both stars, and glides past the line.</li><li>Unfinished planes at the bell don't count.</li></ul>`;
+  const logRows = Array.from({length: maxL}, (_, i) => `<tr><td>${i + 1}</td><td></td><td></td><td></td></tr>`).join('');
+  const factory = f => `<div class="pg"><div class="band">Factory ${LET[f]} · Inspector's sheet</div><div class="body">
+<h2>The standard plane</h2>${spec}<h2>Rules</h2>${rules}
+<h2>Production log</h2><table><tr><th>Workers</th><th>Planes passed</th><th>Planes rejected</th><th>Notes</th></tr>${logRows}</table></div></div>`;
+  const wsRows = Array.from({length: maxL}, (_, i) => `<tr><td>${i + 1}</td>${'<td></td>'.repeat(8)}</tr>`).join('');
+  const worksheet = `<div class="pg"><div class="band">Cost worksheet</div><div class="body">
+<p>Wage: <b>$${state.wage}</b> per worker per round. Rent: <b>$${state.rent}</b> per table per round. Fill in your factory's planes, then compute each column. MP is the change in planes from the row above. MC = wage ÷ MP.</p>
+<table><tr><th>Workers</th><th>Planes (Q)</th><th>MP</th><th>AP = Q ÷ L</th><th>FC</th><th>VC</th><th>TC</th><th>MC</th><th>ATC = TC ÷ Q</th></tr>${wsRows}</table>
+<p>1. At which worker did MP start to fall? Why?</p><p style="height:44px"></p><p>2. At which output is ATC lowest? Is MC above or below ATC there?</p><p style="height:44px"></p></div></div>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Paper Airplane Factory kit</title><style>
+@page{size:letter;margin:0.5in}body{font-family:Archivo,Helvetica,Arial,sans-serif;margin:0;color:#17202A}
+.pg{border:2px solid #17202A;border-radius:6px;overflow:hidden;break-after:page;page-break-after:always}
+.band{background:#1F5FA8;color:#fff;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:14px;padding:8px 14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.body{padding:10px 16px}h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#55606C;margin:14px 0 6px}
+ol,ul{margin:0;padding-left:1.3em;font-size:13px;line-height:1.5}p{font-size:13px;line-height:1.45;margin:6px 0}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}th,td{border:1px solid #aab;padding:4px 6px;height:24px;text-align:center}th{background:#eef2f6}
+</style></head><body>${Array.from({length: F}, (_, f) => factory(f)).join('')}${worksheet}</body></html>`;
+}
+function csv(){
+  const head = ['run', 'capital', 'workers', ...Array.from({length: MAXF}, (_, f) => 'factory_' + LET[f]), 'average', 'MP', 'AP', 'FC', 'VC', 'TC', 'MC', 'AFC', 'AVC', 'ATC'];
+  const lines = [head.join(',')];
+  const n = v => v == null || !isFinite(v) ? '' : (Math.round(v * 100) / 100);
+  state.runs.forEach((run, i) => {
+    const a = analyze(run);
+    run.rows.forEach((r, j) => {
+      const ar = a.rows[j];
+      lines.push([i + 1, run.capital, j + 1, ...r.q.map((v, f) => f < state.factories && v != null ? v : ''), n(ar.Q), n(ar.MP), n(ar.AP), n(ar.FC), n(ar.VC), n(ar.TC), n(ar.MC), n(ar.AFC), n(ar.AVC), n(ar.ATC)].join(','));
+    });
+  });
+  return lines.join('\n') + '\n';
+}
+async function offer(filename, data){
+  if (!dl){ $('dlNote').textContent = "Downloads aren't available in this view."; return; }
+  try { await dl.save({filename, data}); $('dlNote').textContent = 'Saved ' + filename + '.'; }
+  catch (err){ const c = err && err.code; $('dlNote').textContent = c === 'declined' ? 'Download canceled.' : c === 'rate_limited' ? 'A download prompt is already open.' : "That download didn't go through. Try again in a moment."; }
+}
+function confirmBox(el, text, yes, onYes){
+  el.hidden = false;
+  el.innerHTML = `<div class="confirm"><span>${esc(text)}</span><button class="btn danger small" data-yes>${esc(yes)}</button><button class="btn small ghost" data-no>Keep everything</button></div>`;
+  el.querySelector('[data-yes]').onclick = () => { el.hidden = true; onYes(); };
+  el.querySelector('[data-no]').onclick = () => { el.hidden = true; };
+}
+
+/* ---------- wire ---------- */
+function leaveExample(){ if (state.example){ state.example = false; $('exampleBanner').hidden = true; } }
+function addWorker(){
+  const run = curRun();
+  run.rows.push(blankRow()); leaveExample(); save(); resetTimer(); renderFloor();
+  const first = $(`q${run.rows.length - 1}_0`); if (first) first.focus();
+}
+function wire(){
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => { view = b.dataset.view; render(); });
+  $('showMP').onchange = e => { state.showMP = e.target.checked; save(); renderLog(); renderFloorLive(); };
+  $('log').addEventListener('input', e => {
+    const el = e.target.closest('input[data-i]'); if (!el) return;
+    const v = el.value === '' ? null : Math.max(0, Math.round(Number(el.value)));
+    curRun().rows[+el.dataset.i].q[+el.dataset.f] = (v == null || !isFinite(v)) ? null : v;
+    leaveExample(); save();
+    const a = analyze(curRun()), i = +el.dataset.i, row = el.closest('tr');
+    row.querySelector('.avg').textContent = f1(a.rows[i].Q);
+    if (state.showMP){ row.querySelector('.mpc').textContent = f1(a.rows[i].MP); row.querySelector('.apc').textContent = f1(a.rows[i].AP);
+      const nx = row.nextElementSibling; if (nx){ nx.querySelector('.mpc').textContent = f1(a.rows[i + 1].MP); } }
+    renderFloorLive();
+  });
+  $('log').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const el = e.target.closest('input[data-i]'); if (!el) return;
+    e.preventDefault();
+    const i = +el.dataset.i, f = +el.dataset.f;
+    const next = $(`q${i}_${f + 1}`) || $(`q${i + 1}_0`);
+    if (next){ next.focus(); next.select(); }
+  });
+  $('addWorker').onclick = addWorker; $('addWorker2').onclick = addWorker;
+  $('removeRow').onclick = () => { const run = curRun(); if (run.rows.length > 1){ run.rows.pop(); save(); renderFloor(); } };
+  $('tStart').onclick = startPause; $('tReset').onclick = resetTimer;
+  $('tDur').onchange = e => { timer.dur = +e.target.value; resetTimer(); };
+  $('openRun').onclick = () => {
+    const n = state.runs.length;
+    $('runPanel').hidden = false; $('runTitle').textContent = `Run ${n + 1}`; $('startRun').textContent = `Start run ${n + 1}`;
+    $('rCap').value = String(curRun().capital === 1 ? 2 : 1); updateRunPreview(); $('rCap').focus();
+  };
+  $('rCap').onchange = updateRunPreview;
+  $('cancelRun').onclick = () => { $('runPanel').hidden = true; };
+  $('startRun').onclick = () => {
+    state.runs.push(blankRun(+$('rCap').value)); state.cur = state.runs.length - 1;
+    state.showMP = false; leaveExample(); save(); $('runPanel').hidden = true; resetTimer(); render();
+  };
+  $('runChips').addEventListener('click', e => { const c = e.target.closest('[data-run]'); if (c){ dRun = +c.dataset.run; renderDebrief(); } });
+  const costIn = (id) => $(id).oninput = () => { const v = Number($(id).value); if (!isFinite(v) || v < 0) return; if (id.endsWith('Wage')) state.wage = v; else state.rent = v; save(); if (view === 'debrief') renderDebrief(); else renderSetup(); };
+  ['dWage', 'dRent', 'sWage', 'sRent'].forEach(costIn);
+  $('nFact').onchange = () => { state.factories = +$('nFact').value; save(); renderSetup(); };
+  $('clearExample').onclick = () => { state = blankState(); save(); view = 'floor'; render(); };
+  $('resetBtn').onclick = () => confirmBox($('resetConfirm'), `Erase all ${state.runs.length} runs and their production logs?`, 'Erase runs', () => { const keep = {factories: state.factories, wage: state.wage, rent: state.rent}; state = {...blankState(), ...keep}; save(); render(); });
+  $('dlKit').onclick = () => offer('paper-airplane-kit.html', kitHTML());
+  $('dlCsv').onclick = () => offer('paper-airplane-results.csv', csv());
+}
+function updateRunPreview(){
+  const k = +$('rCap').value;
+  $('runPreview').innerHTML = `<b>${esc(capLabel(k))} per factory.</b> Fixed cost becomes ${dollars(state.rent * k)} per round. The new run starts again at 1 worker.`;
+}
+
+function boot(data){
+  state = (data && data.state) || load() || exampleState();
+  if (data && data.view) view = data.view;
+  wire(); drawClock(); render();
+  try { window.claude && window.claude.hot && typeof window.claude.hot.snapshot === 'function' && window.claude.hot.snapshot(() => ({state, view})); } catch (e) {}
+  if (window.claude && typeof window.claude.use === 'function'){
+    window.claude.use('downloads').then(ns => { dl = ns; if (!dl) $('dlNote').textContent = "Downloads aren't available in this view."; }).catch(() => {});
+  }
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+})();
+</script>
+
+</body></html>

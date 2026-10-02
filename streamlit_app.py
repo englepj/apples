@@ -5,7 +5,8 @@ Pick a game in the sidebar. Each game is a self-contained HTML file in this
 folder; this wrapper adds two things the HTML files can't do by themselves:
 
   * Instructor passcode. Until you unlock it, each game's Setup tab (Apple Pit's
-    card values, Food Truck Friday's points tables) is hidden. One unlock
+    card values, Food Truck Friday's points tables, the factory settings) is
+    hidden. One unlock
     covers every game for as long as this browser tab stays open.
   * Working downloads. The printable cards/sheets and CSV buttons save files.
 
@@ -17,7 +18,8 @@ on Streamlit Community Cloud), which overrides the default:
     apple_pit_passcode = "choose-something"
 
 Each game also has its own link: add ?game=apples or ?game=foodtruck to the
-app's address to open straight to that game.
+app's address to open straight to that game (?game=planes for the
+airplane factory).
 
 Run locally:  streamlit run streamlit_app.py
 """
@@ -51,6 +53,13 @@ GAMES = {
         "file": "food_truck_friday.html",
         "setup": "Setup & sheets",
         "about": "Consumer choice: spend a budget on tacos and smoothies, then build the demand curve.",
+        "patches": [],
+    },
+    "planes": {
+        "label": "✈️ Paper Airplane Factory",
+        "file": "paper_airplane_factory.html",
+        "setup": "Setup & sheets",
+        "about": "Production and cost: add one worker per round, then build MP, AP, MC and ATC from the class's output.",
         "patches": [],
     },
 }
