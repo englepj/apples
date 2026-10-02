@@ -1,16 +1,25 @@
-# Apple Pit Market
+# Classroom Market Games
 
-A projector-run double-auction game for Principles of Microeconomics. Students get a
-private buyer card (a value) or seller card (a cost), trade crates of apples in an open
-outcry pit, and the instructor records each trade. The trade tape updates live, and the
-debrief tab builds the step supply and demand curves from the cards.
+Projector-run economics games for Principles of Microeconomics, in one Streamlit app.
+Pick a game from the sidebar:
 
-This repo wraps the game (`apple_pit_market.html`) in a small Streamlit app that adds:
+- **🍎 Apple Pit Market**: supply and demand. Students get a private buyer card (a value)
+  or seller card (a cost), trade crates of apples in an open-outcry pit, and the instructor
+  records each trade. The trade tape updates live, and the debrief builds the step supply
+  and demand curves from the cards.
+- **🌮 Food Truck Friday**: consumer choice. Students spend a budget on tacos and
+  smoothies using a points sheet for their eater type; the instructor tallies by show of
+  hands. The debrief shows the budget line, the class demand curve for tacos, and the
+  substitution and income effects.
 
-- **An instructor passcode** (`applesgame`). Until you unlock it from the sidebar, the
-  *Setup & cards* tab, which lists every card's value and cost, is hidden. It's a light
-  lock to keep the cards off the projector, not real security.
-- **Working downloads** for the printable cards and the results CSV.
+Each game is a self-contained HTML file. `streamlit_app.py` wraps them and adds:
+
+- **One instructor passcode** (`applesgame`) for every game. Until you unlock it from the
+  sidebar, each game's Setup tab (Apple Pit's card values, Food Truck Friday's points
+  tables) is hidden. It's a light lock to keep setup details off the projector, not real
+  security.
+- **Working downloads** for the printable cards/sheets and the results CSVs.
+- **A link for each game**: add `?game=apples` or `?game=foodtruck` to the app's address.
 
 ## Run it locally
 
@@ -27,12 +36,19 @@ app's **Settings → Secrets**; it overrides the default.
 
 ## Running a class
 
-1. Before class, open the sidebar, unlock with `applesgame`, set the class size on
-   *Setup & cards*, **deal a new deck**, and download the printable cards.
+1. Before class, open the sidebar (» at the top left), pick the game, and unlock with
+   `applesgame`. On the Setup tab, set the class size and download the printable cards
+   (Apple Pit: **deal a new deck** first) or sheets (Food Truck Friday).
 2. Lock the app again before you put it on the projector.
-3. Record trades on the *Trading floor* tab; use *Next round…* for shocks, taxes and
-   price controls; switch to *Debrief* at the end.
+3. Run the rounds on the first tab, use *Next round…* to change the rules or prices, and
+   switch to *Debrief* at the end.
 
-Trades are saved in the instructor's browser (local storage), so a refresh doesn't lose a
-round. Each person who opens the app gets their own separate copy of the game, and
-nothing about students is stored; cards are tracked by number.
+Each game saves its rounds in the instructor's browser (local storage), so a refresh or a
+switch between games doesn't lose anything. Each person who opens the app gets their own
+separate copy, and nothing about students is stored.
+
+## Adding another game
+
+Put the game's HTML file in this folder and add an entry to `GAMES` at the top of
+`streamlit_app.py`. If the game has a Setup tab with the ids `tab-setup` and `view-setup`,
+the passcode hides it automatically.

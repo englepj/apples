@@ -1,0 +1,840 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Food Truck Friday</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: projector-first console, sibling to Apple Pit. A menu-board banner
+   posts this round's prices, the budget line is the hero chart, and the tally
+   board sits beside it. Debrief and setup live on their own tabs. */
+:root{
+  --bg:#EFEDE6; --surface:#FCFBF8; --sunk:#E5E2D8; --ink:#1E1B16; --muted:#5F5A4E; --line:#D4CFC1;
+  --taco:#C04A12; --taco-soft:#F6DFD1;
+  --smoothie:#7B3A93; --smoothie-soft:#EBDDF1;
+  --gold:#A87405; --band:#F0E0B0;
+  --ok:#2C7338; --warn:#9A3F12; --warn-soft:#F7E2D3;
+  --font-display:"Alfa Slab One", "Rockwell", "Roboto Slab", Georgia, serif;
+  --font-body:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14130F; --surface:#1D1B16; --sunk:#16140F; --ink:#ECE8DE; --muted:#A39D8E;
+    --line:#353128; --taco:#F07A3E; --taco-soft:#3B2316; --smoothie:#C07FDB; --smoothie-soft:#2F2038;
+    --gold:#E2B13B; --band:#3A3217; --ok:#6CC07A; --warn:#EE8F5C; --warn-soft:#3B2216;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14130F; --surface:#1D1B16; --sunk:#16140F; --ink:#ECE8DE; --muted:#A39D8E;
+  --line:#353128; --taco:#F07A3E; --taco-soft:#3B2316; --smoothie:#C07FDB; --smoothie-soft:#2F2038;
+  --gold:#E2B13B; --band:#3A3217; --ok:#6CC07A; --warn:#EE8F5C; --warn-soft:#3B2216;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;padding:0 clamp(16px,3vw,40px);padding-block:0 48px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding-block:18px 14px;border-bottom:2px solid var(--ink)}
+.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.brand h1{font-family:var(--font-display);font-weight:400;font-size:clamp(1.7rem,3vw,2.3rem);line-height:1;margin:0}
+.brand h1 span{color:var(--taco)}
+.brand p{margin:0;color:var(--muted);font-size:.9rem}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{border:1.5px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.92rem}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.banner{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:14px;padding:10px 14px;border-radius:var(--r);background:var(--band);font-size:.92rem}
+.banner.private{background:var(--warn-soft)}
+
+.btn{border:1.5px solid var(--ink);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;line-height:1.2}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--ink);color:var(--bg)}
+.btn.primary:hover{opacity:.88}
+.btn.ghost{border-color:var(--line)}
+.btn.danger{border-color:var(--warn);color:var(--warn)}
+.btn.small{padding:5px 10px;font-size:.85rem}
+
+/* menu board */
+.board{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px 22px;margin-top:20px;padding:16px 20px;border:2px solid var(--ink);border-radius:var(--r);background:var(--surface)}
+.roundno{font-family:var(--font-display);font-size:.95rem;text-transform:uppercase;letter-spacing:.08em;line-height:1;text-align:center;padding-right:22px;border-right:2px dashed var(--line)}
+.roundno b{display:block;font-weight:400;font-size:3.2rem;margin-top:4px}
+.menu{display:grid;gap:8px;min-width:0}
+.menu .title{font-size:clamp(1.15rem,2vw,1.5rem);font-weight:700;line-height:1.2;text-wrap:balance}
+.menu .title small{display:block;font-size:.92rem;font-weight:500;color:var(--muted)}
+.prices{display:flex;flex-wrap:wrap;gap:10px 14px}
+.tag{display:flex;align-items:baseline;gap:10px;padding:6px 14px;border-radius:8px;border:2px solid currentColor}
+.tag .k{font-size:.8rem;text-transform:uppercase;letter-spacing:.09em;font-weight:700}
+.tag .v{font-family:var(--font-display);font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.05;font-variant-numeric:tabular-nums}
+.tag.taco{color:var(--taco);background:var(--taco-soft)}
+.tag.smoothie{color:var(--smoothie);background:var(--smoothie-soft)}
+.tag.budget{color:var(--ink);background:var(--sunk)}
+.tag.budget .v small{font-family:var(--font-body);font-size:.9rem;font-weight:600;margin-right:4px}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.toggle input{width:18px;height:18px;accent-color:var(--gold)}
+
+.panel{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0}
+.panel-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 16px;margin-bottom:8px}
+h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0;font-weight:700}
+h3{font-size:1.02rem;margin:0 0 6px}
+.note{font-size:.88rem;color:var(--muted)}
+
+.rules{margin-top:12px;display:grid;gap:12px}
+.rules-row{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.field input,.field select{border:1.5px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;font-size:1rem;color:var(--ink);min-width:0}
+.rules-preview{font-size:.95rem;color:var(--muted)}
+.rules-preview b{color:var(--ink)}
+
+.floor{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:16px;margin-top:16px}
+.chart svg{display:block;width:100%;height:auto}
+.stack{display:grid;gap:16px;align-content:start;min-width:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;padding:0;overflow:hidden}
+.stat{padding:12px 16px;border-bottom:1.5px solid var(--line)}
+.stat:nth-child(odd){border-right:1.5px solid var(--line)}
+.stat:nth-last-child(-n+2){border-bottom:0}
+.stat .k{font-size:.75rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.stat .v{font-family:var(--font-display);font-size:clamp(1.6rem,2.8vw,2.3rem);line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .v.taco{color:var(--taco)} .stat .v.smoothie{color:var(--smoothie)}
+.stat .p{font-size:.85rem;color:var(--gold);font-weight:700;min-height:1.3em}
+
+.tally{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tally h3{font-size:.9rem;display:flex;justify-content:space-between;gap:8px}
+.tally .taco h3{color:var(--taco)} .tally .smoothie h3{color:var(--smoothie)}
+.tally h3 span{color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.trow{display:grid;grid-template-columns:2.2em 1fr;align-items:center;gap:8px;padding:2px 0}
+.trow label{font-family:var(--font-mono);font-weight:600;text-align:right;color:var(--muted)}
+.trow input{border:1.5px solid var(--line);background:var(--bg);border-radius:6px;padding:3px 8px;font-family:var(--font-mono);font-size:1rem;width:100%;min-width:0}
+.taco .trow input:focus{border-color:var(--taco)} .smoothie .trow input:focus{border-color:var(--smoothie)}
+.warn{color:var(--warn);font-weight:600;font-size:.9rem;min-height:1.4em;margin-top:8px}
+
+/* debrief */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:20px;align-items:center}
+.chip{border:1.5px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.9rem}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;margin-top:14px;align-items:start}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+.legend b{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:middle;margin-right:6px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td.num,th.num{text-align:right}
+.tc{color:var(--taco);font-weight:700} .sc{color:var(--smoothie);font-weight:700}
+.prompts{margin:0;padding-left:1.2em;display:grid;gap:8px;max-width:65ch}
+.split{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.tile{border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.tile .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.tile .v{font-family:var(--font-display);font-size:1.5rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .s{font-size:.82rem;color:var(--muted)}
+
+/* setup */
+.setup{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.steps{margin:0;padding-left:1.3em;display:grid;gap:10px;max-width:68ch}
+.types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.type{border:1.5px solid var(--line);border-radius:8px;padding:10px;background:var(--bg);font-size:.85rem}
+.type h3{font-size:.95rem}
+.type table{font-size:.8rem} .type td,.type th{padding:3px 4px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--warn-soft);margin-top:10px}
+
+@media (max-width:960px){ .floor,.grid2,.setup{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:640px){
+  .board{grid-template-columns:1fr}
+  .roundno{border-right:0;border-bottom:2px dashed var(--line);padding:0 0 10px;text-align:left}
+  .roundno b{display:inline;font-size:2rem;margin-left:8px}
+  .types{grid-template-columns:1fr}
+  .split{grid-template-columns:1fr}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Food Truck <span>Friday</span></h1>
+      <p>A budget allocation game for consumer choice</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Screens">
+      <button class="tab" role="tab" id="tab-floor" data-view="floor" aria-selected="true">Round</button>
+      <button class="tab" role="tab" id="tab-debrief" data-view="debrief" aria-selected="false">Debrief</button>
+      <button class="tab" role="tab" id="tab-setup" data-view="setup" aria-selected="false">Setup &amp; sheets</button>
+    </nav>
+  </header>
+
+  <div class="banner" id="exampleBanner" hidden>
+    <span><b>Example data.</b> Two rounds from a sample class of 34 are loaded so you can see how each screen works.</span>
+    <button class="btn small" id="clearExample">Clear examples and start round 1</button>
+  </div>
+
+  <!-- ROUND -->
+  <section id="view-floor">
+    <div class="board">
+      <div class="roundno">Round<b id="rNo">1</b></div>
+      <div class="menu">
+        <div class="title" id="rTitle"></div>
+        <div class="prices" id="rPrices"></div>
+      </div>
+      <div class="ctl">
+        <button class="btn primary" id="openRules">Next round…</button>
+        <label class="toggle"><input type="checkbox" id="showPred"> Show prediction</label>
+      </div>
+    </div>
+
+    <div class="panel rules" id="rulesPanel" hidden>
+      <div class="panel-h"><h2 id="rulesTitle">Prices for round 2</h2></div>
+      <div class="rules-row">
+        <label class="field">Scenario
+          <select id="rPreset"></select>
+        </label>
+        <label class="field">Taco price ($)<input id="rPT" type="number" min="0.5" step="0.5" style="width:6.5em"></label>
+        <label class="field">Smoothie price ($)<input id="rPS" type="number" min="0.5" step="0.5" style="width:6.5em"></label>
+        <label class="field" id="rBWrap">Budget ($)<input id="rB" type="number" min="1" step="1" style="width:6.5em"></label>
+        <div class="row">
+          <button class="btn primary" id="startRound">Start round 2</button>
+          <button class="btn" id="applyRound" hidden>Apply to round 1</button>
+          <button class="btn ghost" id="cancelRules">Cancel</button>
+        </div>
+      </div>
+      <div class="rules-preview" id="rulesPreview"></div>
+    </div>
+
+    <div class="floor">
+      <div class="stack">
+      <div class="panel chart">
+        <div class="panel-h"><h2>Budget line</h2><span class="note" id="blNote"></span></div>
+        <div id="budgetChart"></div>
+        <div class="legend" id="blLegend"></div>
+      </div>
+      <div class="panel chart">
+        <div class="panel-h"><h2>What the class bought</h2><span class="note">Students at each quantity</span></div>
+        <div id="histChart"></div>
+      </div>
+      </div>
+      <div class="stack">
+        <div class="panel stats" id="stats"></div>
+        <div class="panel">
+          <div class="panel-h"><h2>Tally the class</h2><button class="btn small ghost" id="clearTally">Clear tally</button></div>
+          <p class="note" style="margin:0 0 10px">Ask for a show of hands at each quantity and type the count.</p>
+          <div class="tally">
+            <div class="taco"><h3>Tacos bought <span id="tTot"></span></h3><div id="tIn"></div></div>
+            <div class="smoothie"><h3>Smoothies bought <span id="sTot"></span></h3><div id="sIn"></div></div>
+          </div>
+          <div class="warn" id="tallyWarn" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEBRIEF -->
+  <section id="view-debrief" hidden>
+    <div class="chips" id="roundChips"></div>
+    <div class="grid2">
+      <div class="stack">
+        <div class="panel chart">
+          <div class="panel-h"><h2>Demand for tacos</h2><span class="note" id="demNote"></span></div>
+          <div id="demandChart"></div>
+          <div class="legend"><span><b style="background:var(--taco)"></b>Class average, by round</span><span><i style="border-color:var(--gold)"></i>Predicted from the sheets</span></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>Substitution and income effects</h2><span class="note" id="slNote"></span></div>
+          <div id="slutsky"></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <div class="panel-h"><h2 id="bestTitle">Best bundles this round</h2></div>
+          <div class="tablewrap" id="bestTable"></div>
+          <p class="note" style="margin:10px 0 0">At the best bundle, the last taco and the last smoothie give about the same points per dollar. Whole units keep them from matching exactly.</p>
+        </div>
+        <div class="panel"><div class="panel-h"><h2>Ask the class</h2></div><ol class="prompts" id="prompts"></ol></div>
+        <div class="panel chart">
+          <div class="panel-h"><h2>Income and quantity</h2><span class="note">At the opening prices</span></div>
+          <div id="engelChart"></div>
+          <div class="legend"><span><b style="background:var(--taco)"></b>Tacos</span><span><b style="background:var(--smoothie)"></b>Smoothies</span><span>Dots: class averages · dashed: predicted</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="view-setup" hidden>
+    <div class="banner private"><span><b>Keep this screen off the projector during a round.</b> It shows every type's points table and best bundles.</span></div>
+    <div class="setup">
+      <div class="panel">
+        <div class="panel-h"><h2>Class and sheets</h2></div>
+        <div class="rules-row">
+          <label class="field">Students playing<input id="nStudents" type="number" min="3" max="90" value="34" style="width:7em"></label>
+          <button class="btn primary" id="setClass">Update class size</button>
+        </div>
+        <p class="note" id="mixNote"></p>
+        <div id="sizeConfirm" hidden></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="dlSheets">Download printable sheets</button>
+          <button class="btn" id="dlCsv">Download tallies (.csv)</button>
+        </div>
+        <p class="note" id="dlNote"></p>
+        <div class="types" id="types"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>Running the game</h2></div>
+        <ol class="steps">
+          <li><b>Before class.</b> Set the class size and download the sheets. There are three kinds of eater: Taco Fan, Mixed Tastes, and Smoothie Fan, split about evenly. Each sheet lists how many points the 1st, 2nd, 3rd taco or smoothie is worth to that eater.</li>
+          <li><b>Rules, 3 minutes.</b> Each round you have a budget to spend at the food trucks. Buy whole tacos and smoothies, stay within budget, and score as many points as you can. Unspent money scores nothing. Work alone.</li>
+          <li><b>Each round.</b> Post the prices, give students about 3 minutes to choose and record their bundle and points, then tally by show of hands: "Who bought 0 tacos? 1 taco? 2?" Do the same for smoothies.</li>
+          <li><b>Suggested order.</b> Opening prices, then tacos at $4, then tacos at $1. That gives three points on the demand curve. Add a payday round for income effects, or the compensated round to split substitution and income effects.</li>
+          <li><b>Debrief.</b> Ask students to compute points per dollar for their last taco and last smoothie. Then reveal the best bundles and the demand curve on the Debrief tab.</li>
+        </ol>
+        <p class="note" style="margin-top:14px">Tallies are saved in this browser only, so a refresh won't lose a round. Nothing about individual students is recorded.</p>
+        <div class="row" style="margin-top:12px"><button class="btn danger" id="resetBtn">Erase all rounds</button></div>
+        <div id="resetConfirm" hidden></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+const KEY = 'foodtruck.v1';
+const MAXQ = 12;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const pad0 = a => { const r = a.slice(0, MAXQ); while (r.length < MAXQ) r.push(0); return r; };
+const dollars = p => Number.isInteger(p) ? '$' + p : '$' + p.toFixed(2);
+const f1 = v => v == null ? '–' : v.toFixed(1);
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* Points for the 1st, 2nd, ... unit. Tuned so each type has one best bundle in every preset. */
+const TYPES = {
+  A: {name: 'Taco Fan',     T: pad0([36,32,28,24,20,16,12,8,4]),     S: pad0([33,28,23,18,13,8,3])},
+  B: {name: 'Mixed Tastes', T: pad0([26,23,20,17,14,11,8,5,2]),      S: pad0([42,35,28,21,14,7])},
+  C: {name: 'Smoothie Fan', T: pad0([17,13,9,5,1]),                  S: pad0([39,31,23,15,7])}
+};
+const KEYS = ['A', 'B', 'C'];
+const points = (k, x, y) => TYPES[k].T.slice(0, x).reduce((a, b) => a + b, 0) + TYPES[k].S.slice(0, y).reduce((a, b) => a + b, 0);
+
+function best(k, pT, pS, B){
+  let bu = -1, list = [];
+  for (let x = 0; x <= MAXQ; x++) for (let y = 0; y <= MAXQ; y++){
+    if (x * pT + y * pS > B + 1e-9) continue;
+    const u = points(k, x, y);
+    if (u > bu){ bu = u; list = [[x, y]]; } else if (u === bu) list.push([x, y]);
+  }
+  // among ties prefer the one that spends the most
+  list.sort((a, b) => (b[0] * pT + b[1] * pS) - (a[0] * pT + a[1] * pS));
+  return {u: bu, x: list[0][0], y: list[0][1], ties: list};
+}
+
+/* ---------- scenarios ---------- */
+const PRESETS = [
+  {key: 'open',   label: 'Opening prices',            pT: 2, pS: 4, B: 20},
+  {key: 'tacoUp', label: 'Taco price rises',          pT: 4, pS: 4, B: 20},
+  {key: 'tacoDn', label: 'Taco Tuesday sale',         pT: 1, pS: 4, B: 20},
+  {key: 'taco3',  label: 'Small taco price rise',     pT: 3, pS: 4, B: 20},
+  {key: 'smUp',   label: 'Smoothie price rises',      pT: 2, pS: 6, B: 20},
+  {key: 'payday', label: 'Payday',                    pT: 2, pS: 4, B: 28},
+  {key: 'tight',  label: 'Rent is due',               pT: 2, pS: 4, B: 16},
+  {key: 'comp',   label: 'Compensated taco price rise', pT: 4, pS: 4, B: null},
+  {key: 'custom', label: 'Custom prices',             pT: 2, pS: 4, B: 20}
+];
+const preset = key => PRESETS.find(p => p.key === key) || PRESETS[0];
+
+function compBudgets(pT, pS){
+  const ref = state.rounds[0].sc;
+  const out = {};
+  KEYS.forEach(k => { const b = best(k, ref.pT, ref.pS, ref.budgets[k]); out[k] = pT * b.x + pS * b.y; });
+  return out;
+}
+function makeSc(key, pT, pS, B){
+  const budgets = key === 'comp' ? compBudgets(pT, pS) : {A: B, B: B, C: B};
+  return {key, pT, pS, budgets};
+}
+const uniform = sc => sc.budgets.A === sc.budgets.B && sc.budgets.B === sc.budgets.C;
+function headline(sc){
+  const t = dollars(sc.pT), s = dollars(sc.pS), b = dollars(sc.budgets.A);
+  switch (sc.key){
+    case 'open': return ['Opening prices', 'Spend your budget for the most points. Unspent money scores nothing.'];
+    case 'tacoUp': case 'taco3': return ['Tortilla shortage', `Tacos now cost ${t}.`];
+    case 'tacoDn': return ['Taco Tuesday sale', `Tacos are ${t} each this round.`];
+    case 'smUp': return ['Berry prices jump', `Smoothies now cost ${s}.`];
+    case 'payday': return ['Payday', `Everyone's budget rises to ${b}.`];
+    case 'tight': return ['Rent is due', `Everyone's budget falls to ${b}.`];
+    case 'comp': return ['Tacos cost more, and your budget rises to match', 'Your new budget buys exactly your round-1 bundle. Find your type below.'];
+    default: return ['New prices', 'Find your best bundle at these prices.'];
+  }
+}
+
+/* ---------- state ---------- */
+let state;
+function mix(n){ const a = Math.round(n / 3), b = Math.round(n / 3); return {A: a, B: b, C: n - a - b}; }
+function blankRound(sc){ return {sc, tT: Array(MAXQ + 1).fill(0), tS: Array(MAXQ + 1).fill(0)}; }
+function blankState(n){
+  const p = PRESETS[0];
+  return {n, mix: mix(n), rounds: [blankRound({key: 'open', pT: p.pT, pS: p.pS, budgets: {A: p.B, B: p.B, C: p.B}})], cur: 0, showPred: false, example: false};
+}
+function simulate(round, rnd){
+  const sc = round.sc;
+  KEYS.forEach(k => {
+    const B = sc.budgets[k], b = best(k, sc.pT, sc.pS, B);
+    const near = [];
+    for (let x = Math.max(0, b.x - 2); x <= Math.min(MAXQ, b.x + 2); x++) for (let y = Math.max(0, b.y - 2); y <= Math.min(MAXQ, b.y + 2); y++){
+      const sp = x * sc.pT + y * sc.pS;
+      if (sp <= B && sp > B - Math.max(sc.pT, sc.pS) && !(x === b.x && y === b.y)) near.push([x, y]);
+    }
+    for (let i = 0; i < state.mix[k]; i++){
+      const pick = (rnd() < 0.62 || !near.length) ? [b.x, b.y] : near[Math.floor(rnd() * near.length)];
+      round.tT[pick[0]]++; round.tS[pick[1]]++;
+    }
+  });
+}
+function exampleState(){
+  state = blankState(34); state.example = true;
+  const rnd = mulberry32(11);
+  simulate(state.rounds[0], rnd);
+  const p = preset('tacoUp');
+  state.rounds.push(blankRound(makeSc('tacoUp', p.pT, p.pS, p.B))); state.cur = 1;
+  simulate(state.rounds[1], rnd);
+  return state;
+}
+function load(){ try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); return s && s.rounds && s.mix ? s : null; } catch (e) { return null; } }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+/* ---------- analysis ---------- */
+function analyze(round){
+  const sc = round.sc;
+  const nT = round.tT.reduce((a, b) => a + b, 0), nS = round.tS.reduce((a, b) => a + b, 0);
+  const avgT = nT ? round.tT.reduce((a, c, q) => a + c * q, 0) / nT : null;
+  const avgS = nS ? round.tS.reduce((a, c, q) => a + c * q, 0) / nS : null;
+  const N = KEYS.reduce((a, k) => a + state.mix[k], 0);
+  const bests = Object.fromEntries(KEYS.map(k => [k, best(k, sc.pT, sc.pS, sc.budgets[k])]));
+  const predT = KEYS.reduce((a, k) => a + state.mix[k] * bests[k].x, 0) / N;
+  const predS = KEYS.reduce((a, k) => a + state.mix[k] * bests[k].y, 0) / N;
+  const avgB = KEYS.reduce((a, k) => a + state.mix[k] * sc.budgets[k], 0) / N;
+  const spent = avgT != null && avgS != null ? avgT * sc.pT + avgS * sc.pS : null;
+  return {nT, nS, avgT, avgS, N, bests, predT, predS, avgB, spent};
+}
+const hasData = r => r.tT.some(Boolean) || r.tS.some(Boolean);
+function predAvgT(pT, pS, B){ const N = KEYS.reduce((a, k) => a + state.mix[k], 0); return KEYS.reduce((a, k) => a + state.mix[k] * best(k, pT, pS, B).x, 0) / N; }
+function predAvgS(pT, pS, B){ const N = KEYS.reduce((a, k) => a + state.mix[k], 0); return KEYS.reduce((a, k) => a + state.mix[k] * best(k, pT, pS, B).y, 0) / N; }
+
+/* ---------- charts ---------- */
+const fs = (s, x) => `font-size="${s}"` + (x ? ` ${x}` : '');
+function axes(W, H, m, xmax, ymax, x, y, xl, yl, xstep, ystep, yfmt){
+  let s = '';
+  for (let v = 0; v <= ymax + 1e-9; v += ystep){
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>`;
+    s += `<text x="${m.l - 8}" y="${y(v) + 5}" text-anchor="end" ${fs(13)} fill="var(--muted)">${yfmt ? yfmt(v) : v}</text>`;
+  }
+  for (let v = 0; v <= xmax + 1e-9; v += xstep) s += `<text x="${x(v)}" y="${H - m.b + 22}" text-anchor="middle" ${fs(13)} fill="var(--muted)">${v}</text>`;
+  s += `<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${H - m.b}" stroke="var(--muted)" stroke-width="1.5"/>`;
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${H - m.b}" y2="${H - m.b}" stroke="var(--muted)" stroke-width="1.5"/>`;
+  s += `<text x="${m.l + (W - m.l - m.r) / 2}" y="${H - 6}" text-anchor="middle" ${fs(13)} fill="var(--muted)" font-weight="600">${xl}</text>`;
+  s += `<text transform="translate(16 ${m.t + (H - m.t - m.b) / 2}) rotate(-90)" text-anchor="middle" ${fs(13)} fill="var(--muted)" font-weight="600">${yl}</text>`;
+  return s;
+}
+const stepFor = v => v <= 12 ? 2 : v <= 24 ? 4 : 5;
+
+function budgetSVG(round, prev, a, showPred){
+  const W = 760, H = 460, m = {l: 58, r: 26, t: 22, b: 52};
+  const sc = round.sc;
+  const lines = sc2lines(sc);
+  const plines = prev ? sc2lines(prev.sc) : [];
+  const all = lines.concat(plines);
+  const xmax = Math.max(10, ...all.map(l => Math.ceil(l.B / l.pT)));
+  const ymax = Math.max(10, ...all.map(l => Math.ceil(l.B / l.pS)));
+  const X = Math.min(xmax, 24), Y = Math.min(ymax, 24);
+  const x = v => m.l + v / X * (W - m.l - m.r), y = v => H - m.b - v / Y * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Budget line for this round">`;
+  s += axes(W, H, m, X, Y, x, y, 'Tacos', 'Smoothies', stepFor(X), stepFor(Y));
+  s += `<defs><clipPath id="plot"><rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}"/></clipPath></defs><g clip-path="url(#plot)">`;
+  plines.forEach(l => { s += `<line x1="${x(0)}" y1="${y(l.B / l.pS)}" x2="${x(l.B / l.pT)}" y2="${y(0)}" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 6" opacity="0.7"/>`; });
+  lines.forEach(l => {
+    s += `<polygon points="${x(0)},${y(0)} ${x(0)},${y(l.B / l.pS)} ${x(l.B / l.pT)},${y(0)}" fill="var(--band)" opacity="${lines.length > 1 ? 0.25 : 0.55}"/>`;
+    s += `<line x1="${x(0)}" y1="${y(l.B / l.pS)}" x2="${x(l.B / l.pT)}" y2="${y(0)}" stroke="var(--ink)" stroke-width="3"/>`;
+  });
+  s += '</g>';
+  lines.forEach(l => {
+    if (l.label){ const lx = x(Math.min(X, l.B / l.pT) * 0.55), ly = y(l.B / l.pS * 0.45); s += `<text x="${lx + 6}" y="${ly - 6}" ${fs(13)} font-weight="700" fill="var(--ink)">${esc(l.label)} ${dollars(l.B)}</text>`; }
+  });
+  if (showPred){
+    KEYS.forEach(k => {
+      const b = a.bests[k];
+      s += `<circle cx="${x(b.x)}" cy="${y(b.y)}" r="13" fill="var(--gold)" stroke="var(--surface)" stroke-width="2"/>`;
+      s += `<text x="${x(b.x)}" y="${y(b.y) + 5}" text-anchor="middle" ${fs(14)} font-weight="700" fill="var(--surface)">${k}</text>`;
+    });
+  }
+  if (a.avgT != null && a.avgS != null){
+    s += `<circle cx="${x(a.avgT)}" cy="${y(a.avgS)}" r="10" fill="var(--taco)" stroke="var(--surface)" stroke-width="3"/>`;
+    s += `<text x="${x(a.avgT) + 16}" y="${y(a.avgS) - 12}" ${fs(15)} font-weight="700" fill="var(--taco)">Class average (${f1(a.avgT)}, ${f1(a.avgS)})</text>`;
+  }
+  return s + '</svg>';
+}
+function sc2lines(sc){
+  if (uniform(sc)) return [{pT: sc.pT, pS: sc.pS, B: sc.budgets.A, label: ''}];
+  return KEYS.map(k => ({pT: sc.pT, pS: sc.pS, B: sc.budgets[k], label: TYPES[k].name}));
+}
+
+function histSVG(round){
+  const W = 760, H = 250, m = {l: 44, r: 12, t: 18, b: 46};
+  const top = Math.max(4, ...round.tT, ...round.tS);
+  const Y = Math.ceil(top / 4) * 4;
+  const slot = (W - m.l - m.r) / (MAXQ + 1), bw = Math.min(24, slot * 0.4);
+  const y = v => H - m.b - v / Y * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="How many students bought each quantity of tacos and smoothies">`;
+  for (let v = 0; v <= Y; v += Y / 4){
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>`;
+    s += `<text x="${m.l - 8}" y="${y(v) + 5}" text-anchor="end" ${fs(13)} fill="var(--muted)">${v}</text>`;
+  }
+  for (let q = 0; q <= MAXQ; q++){
+    const cx = m.l + slot * (q + 0.5);
+    const t = round.tT[q], sm = round.tS[q];
+    if (t) s += `<rect x="${cx - bw - 1}" y="${y(t)}" width="${bw}" height="${y(0) - y(t)}" rx="3" fill="var(--taco)"/><text x="${cx - bw / 2 - 1}" y="${y(t) - 6}" text-anchor="middle" ${fs(13)} font-weight="700" fill="var(--taco)">${t}</text>`;
+    if (sm) s += `<rect x="${cx + 1}" y="${y(sm)}" width="${bw}" height="${y(0) - y(sm)}" rx="3" fill="var(--smoothie)"/><text x="${cx + bw / 2 + 1}" y="${y(sm) - 6}" text-anchor="middle" ${fs(13)} font-weight="700" fill="var(--smoothie)">${sm}</text>`;
+    s += `<text x="${cx}" y="${H - m.b + 22}" text-anchor="middle" ${fs(14)} font-weight="600" fill="var(--ink)">${q}</text>`;
+  }
+  s += `<text x="${m.l + (W - m.l - m.r) / 2}" y="${H - 4}" text-anchor="middle" ${fs(13)} fill="var(--muted)" font-weight="600">Quantity bought  ·  <tspan fill="var(--taco)">tacos</tspan>  ·  <tspan fill="var(--smoothie)">smoothies</tspan></text>`;
+  return s + '</svg>';
+}
+
+function demandSVG(){
+  const ref = state.rounds[0].sc, B = ref.budgets.A;
+  const W = 760, H = 400, m = {l: 58, r: 26, t: 20, b: 52};
+  const prices = [];
+  for (let p = 1; p <= 6; p += 0.5) prices.push(p);
+  const curve = prices.map(p => [predAvgT(p, ref.pS, B), p]);
+  const pts = state.rounds.map((r, i) => ({r, i})).filter(({r}) => uniform(r.sc) && r.sc.pS === ref.pS && r.sc.budgets.A === B && hasData(r))
+    .map(({r, i}) => ({i, q: analyze(r).avgT, p: r.sc.pT}));
+  const X = Math.max(10, Math.ceil(Math.max(...curve.map(c => c[0]), ...pts.map(p => p.q)) / 2) * 2);
+  const Y = 6.5;
+  const x = v => m.l + v / X * (W - m.l - m.r), y = v => H - m.b - v / Y * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Average tacos bought at each taco price, with the predicted demand curve">`;
+  s += axes(W, H, m, X, 6, x, y, 'Average tacos per student', 'Taco price', 2, 1, v => '$' + v);
+  s += `<polyline points="${curve.map(c => x(c[0]) + ',' + y(c[1])).join(' ')}" fill="none" stroke="var(--gold)" stroke-width="3" stroke-linejoin="round"/>`;
+  curve.forEach(c => { if (Number.isInteger(c[1])) s += `<circle cx="${x(c[0])}" cy="${y(c[1])}" r="4" fill="var(--gold)"/>`; });
+  pts.forEach(p => {
+    s += `<circle cx="${x(p.q)}" cy="${y(p.p)}" r="9" fill="var(--taco)" stroke="var(--surface)" stroke-width="2.5"/>`;
+    s += `<text x="${x(p.q) + 14}" y="${y(p.p) - 10}" ${fs(14)} font-weight="700" fill="var(--taco)">R${p.i + 1}: ${f1(p.q)}</text>`;
+  });
+  if (!pts.length) s += `<text x="${W / 2}" y="${m.t + 30}" text-anchor="middle" ${fs(15)} fill="var(--muted)">Class points appear here once you tally a round</text>`;
+  $('demNote').textContent = `Smoothies ${dollars(ref.pS)}, budget ${dollars(B)}`;
+  return s + '</svg>';
+}
+
+function engelSVG(){
+  const ref = state.rounds[0].sc;
+  const W = 520, H = 320, m = {l: 50, r: 18, t: 20, b: 50};
+  const budgets = [12, 16, 20, 24, 28, 32];
+  const cT = budgets.map(b => [b, predAvgT(ref.pT, ref.pS, b)]), cS = budgets.map(b => [b, predAvgS(ref.pT, ref.pS, b)]);
+  const pts = state.rounds.map((r, i) => ({r, i})).filter(({r}) => uniform(r.sc) && r.sc.pT === ref.pT && r.sc.pS === ref.pS && hasData(r))
+    .map(({r, i}) => { const a = analyze(r); return {i, B: r.sc.budgets.A, t: a.avgT, s: a.avgS}; });
+  const Y = Math.max(10, Math.ceil(Math.max(...cT.map(c => c[1]), ...cS.map(c => c[1])) / 2) * 2);
+  const x = v => m.l + (v - 8) / 28 * (W - m.l - m.r), y = v => H - m.b - v / Y * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Average quantities at different budgets">`;
+  for (let v = 0; v <= Y; v += 2){ s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${m.l - 8}" y="${y(v) + 5}" text-anchor="end" ${fs(13)} fill="var(--muted)">${v}</text>`; }
+  for (let b = 8; b <= 36; b += 4) s += `<text x="${x(b)}" y="${H - m.b + 22}" text-anchor="middle" ${fs(13)} fill="var(--muted)">$${b}</text>`;
+  s += `<text x="${m.l + (W - m.l - m.r) / 2}" y="${H - 6}" text-anchor="middle" ${fs(13)} fill="var(--muted)" font-weight="600">Budget</text>`;
+  s += `<text transform="translate(16 ${m.t + (H - m.t - m.b) / 2}) rotate(-90)" text-anchor="middle" ${fs(13)} fill="var(--muted)" font-weight="600">Average quantity</text>`;
+  [[cT, 'var(--taco)'], [cS, 'var(--smoothie)']].forEach(([c, col]) => {
+    s += `<polyline points="${c.map(p => x(p[0]) + ',' + y(p[1])).join(' ')}" fill="none" stroke="${col}" stroke-width="2.5" stroke-dasharray="7 5" opacity="0.9"/>`;
+  });
+  s += `<text x="${W - m.r - 4}" y="${y(cT[cT.length - 1][1]) - 8}" text-anchor="end" ${fs(13)} font-weight="700" fill="var(--taco)">Tacos</text>`;
+  s += `<text x="${W - m.r - 4}" y="${y(cS[cS.length - 1][1]) - 8}" text-anchor="end" ${fs(13)} font-weight="700" fill="var(--smoothie)">Smoothies</text>`;
+  pts.forEach(p => {
+    s += `<circle cx="${x(p.B)}" cy="${y(p.t)}" r="8" fill="var(--taco)" stroke="var(--surface)" stroke-width="2"/>`;
+    s += `<circle cx="${x(p.B)}" cy="${y(p.s)}" r="8" fill="var(--smoothie)" stroke="var(--surface)" stroke-width="2"/>`;
+    s += `<text x="${x(p.B)}" y="${y(Math.max(p.t, p.s)) - 14}" text-anchor="middle" ${fs(12)} font-weight="700" fill="var(--ink)">R${p.i + 1}</text>`;
+  });
+  return s + '</svg>';
+}
+
+/* ---------- render ---------- */
+let view = 'floor', dRound = null;
+const cur = () => state.rounds[state.cur];
+
+function priceTags(sc){
+  let h = `<div class="tag taco"><span class="k">Tacos</span><span class="v">${dollars(sc.pT)}</span></div>` +
+          `<div class="tag smoothie"><span class="k">Smoothies</span><span class="v">${dollars(sc.pS)}</span></div>`;
+  if (uniform(sc)) h += `<div class="tag budget"><span class="k">Budget</span><span class="v">${dollars(sc.budgets.A)}</span></div>`;
+  else KEYS.forEach(k => { h += `<div class="tag budget"><span class="k">${TYPES[k].name}</span><span class="v">${dollars(sc.budgets[k])}</span></div>`; });
+  return h;
+}
+
+function renderTallyInputs(){
+  const r = cur();
+  const col = (arr, pre) => arr.map((c, q) => `<div class="trow"><label for="${pre}${q}">${q}</label><input id="${pre}${q}" data-good="${pre}" data-q="${q}" type="number" min="0" step="1" inputmode="numeric" value="${c || ''}" placeholder="0"></div>`).join('');
+  $('tIn').innerHTML = col(r.tT, 't');
+  $('sIn').innerHTML = col(r.tS, 's');
+}
+
+function renderFloorLive(){
+  const r = cur(), a = analyze(r), prev = state.cur > 0 ? state.rounds[state.cur - 1] : null;
+  $('budgetChart').innerHTML = budgetSVG(r, prev, a, state.showPred);
+  $('blNote').textContent = prev ? `Dashed: round ${state.cur}` : '';
+  $('blLegend').innerHTML = `<span><i style="border-color:var(--ink)"></i>This round's budget line</span>` + (prev ? `<span><i style="border-color:var(--muted);border-top-style:dashed"></i>Last round</span>` : '') +
+    `<span><b style="background:var(--taco)"></b>Class average bundle</span>` + (state.showPred ? `<span><b style="background:var(--gold)"></b>Best bundle for each type (A, B, C)</span>` : '');
+  const P = state.showPred;
+  $('stats').innerHTML = [
+    ['Avg tacos', f1(a.avgT), 'taco', P ? `Predicted ${f1(a.predT)}` : ''],
+    ['Avg smoothies', f1(a.avgS), 'smoothie', P ? `Predicted ${f1(a.predS)}` : ''],
+    ['Avg spent', a.spent != null ? '$' + a.spent.toFixed(2) : '–', '', `Average budget ${dollars(Math.round(a.avgB * 100) / 100)}`],
+    ['Responses', `${Math.max(a.nT, a.nS)}<span style="font-size:.5em;color:var(--muted)"> / ${a.N}</span>`, '', '']
+  ].map(([k, v, c, p]) => `<div class="stat"><div class="k">${k}</div><div class="v ${c}">${v}</div><div class="p">${p}</div></div>`).join('');
+  $('tTot').textContent = `${a.nT} of ${a.N}`;
+  $('sTot').textContent = `${a.nS} of ${a.N}`;
+  const w = [];
+  if (a.nT && a.nT !== a.N) w.push(`Taco counts add to ${a.nT}, not ${a.N}.`);
+  if (a.nS && a.nS !== a.N) w.push(`Smoothie counts add to ${a.nS}, not ${a.N}.`);
+  if (a.spent != null && a.spent > a.avgB + 0.01) w.push('The average bundle costs more than the budget. Check the counts.');
+  $('tallyWarn').textContent = w.join(' ');
+  $('histChart').innerHTML = histSVG(r);
+}
+
+function renderFloor(){
+  const r = cur();
+  $('rNo').textContent = state.cur + 1;
+  const [h1, h2] = headline(r.sc);
+  $('rTitle').innerHTML = `${esc(h1)}<small>${esc(h2)}</small>`;
+  $('rPrices').innerHTML = priceTags(r.sc);
+  $('showPred').checked = !!state.showPred;
+  renderTallyInputs();
+  renderFloorLive();
+}
+
+function prompts(sc, a){
+  switch (sc.key){
+    case 'tacoUp': case 'taco3': return [
+      'Tacos got more expensive. How many fewer did the class buy? Where does this point sit on the demand curve?',
+      'Did anyone buy more smoothies? Why would a taco price change smoothie purchases?',
+      'Compare points per dollar for your last taco and last smoothie. Are they close?'];
+    case 'tacoDn': return [
+      'Tacos got cheaper. Who changed their bundle the most, Taco Fans or Smoothie Fans?',
+      'With three rounds at different taco prices, sketch the class demand curve for tacos.',
+      'Did the sale make you better off even if you bought the same number of tacos?'];
+    case 'smUp': return [
+      'Smoothies cost more. What happened to taco purchases? Are tacos and smoothies substitutes or complements here?',
+      'Which type gave up the most points from the price change?'];
+    case 'payday': case 'tight': return [
+      'Your budget changed but prices did not. Did you buy more of both goods, or mostly one?',
+      'Are tacos a normal good for every type? How would an inferior good look on the income chart?'];
+    case 'comp': return [
+      'You could still afford your round-1 bundle. Did you keep it? If not, why switch?',
+      'Moving away from tacos here is the substitution effect alone. Compare it with the full drop when tacos cost the same but your budget did not rise.',
+      'Were you better off this round than in the uncompensated round? Why?'];
+    default: return [
+      'Find the points per dollar of your last taco and your last smoothie. Are they about equal?',
+      'Would one more taco and one less smoothie have scored more? Check with your sheet.',
+      'Why did people with the same budget choose such different bundles?'];
+  }
+}
+
+function renderDebrief(){
+  if (dRound == null || dRound >= state.rounds.length) dRound = state.cur;
+  $('roundChips').innerHTML = '<span class="note" style="margin-right:6px">Round</span>' + state.rounds.map((r, i) =>
+    `<button class="chip" data-round="${i}" aria-pressed="${i === dRound}">${i + 1} · ${dollars(r.sc.pT)} / ${dollars(r.sc.pS)}${uniform(r.sc) ? ' / ' + dollars(r.sc.budgets.A) : ' / comp.'}</button>`).join('');
+  const r = state.rounds[dRound], a = analyze(r), sc = r.sc;
+  $('demandChart').innerHTML = demandSVG();
+  $('bestTitle').textContent = `Best bundles, round ${dRound + 1}`;
+  const rows = KEYS.map(k => {
+    const b = a.bests[k], T = TYPES[k];
+    const mt = b.x > 0 ? (T.T[b.x - 1] / sc.pT).toFixed(1) : '–', ms = b.y > 0 ? (T.S[b.y - 1] / sc.pS).toFixed(1) : '–';
+    const alt = b.ties.length > 1 ? ` <span class="note">(tie: ${b.ties.slice(1).map(t => t.join(' + ')).join(', ')})</span>` : '';
+    return `<tr><td style="white-space:nowrap"><b>${k}</b> ${T.name}<div class="note">${state.mix[k]} students${uniform(sc) ? '' : ' · ' + dollars(sc.budgets[k])}</div></td><td><span class="tc">${b.x}</span> + <span class="sc">${b.y}</span>${alt}</td><td class="num">${b.u}</td><td class="num tc">${mt}</td><td class="num sc">${ms}</td></tr>`;
+  }).join('');
+  $('bestTable').innerHTML = `<table><thead><tr><th>Type</th><th>Bundle</th><th class="num">Points</th><th class="num">Last taco<br>pts per $</th><th class="num">Last smoothie<br>pts per $</th></tr></thead><tbody>${rows}</tbody>` +
+    `<tfoot><tr><td><b>Class</b></td><td colspan="4">Predicted average ${f1(a.predT)} tacos + ${f1(a.predS)} smoothies${a.avgT != null ? `; actual ${f1(a.avgT)} + ${f1(a.avgS)}` : ''}</td></tr></tfoot></table>`;
+  $('prompts').innerHTML = prompts(sc, a).map(p => `<li>${esc(p)}</li>`).join('');
+  renderSlutsky(r);
+  $('engelChart').innerHTML = engelSVG();
+}
+
+function renderSlutsky(sel){
+  const ref = state.rounds[0].sc, B = ref.budgets.A;
+  const pNew = sel.sc.pT !== ref.pT ? sel.sc.pT : 4;
+  const N = KEYS.reduce((a, k) => a + state.mix[k], 0);
+  const comp = compBudgetsFor(ref, pNew);
+  const x0 = predAvgT(ref.pT, ref.pS, B);
+  const xc = KEYS.reduce((a, k) => a + state.mix[k] * best(k, pNew, ref.pS, comp[k]).x, 0) / N;
+  const x1 = predAvgT(pNew, ref.pS, B);
+  const find = test => { const i = state.rounds.findIndex(r => hasData(r) && test(r.sc)); return i < 0 ? null : analyze(state.rounds[i]).avgT; };
+  const a0 = find(sc => uniform(sc) && sc.pT === ref.pT && sc.pS === ref.pS && sc.budgets.A === B);
+  const ac = find(sc => !uniform(sc) && sc.pT === pNew && sc.pS === ref.pS);
+  const a1 = find(sc => uniform(sc) && sc.pT === pNew && sc.pS === ref.pS && sc.budgets.A === B);
+  $('slNote').textContent = `Tacos ${dollars(ref.pT)} → ${dollars(pNew)}`;
+  const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+  const tile = (k, pv, av, s) => `<div class="tile"><div class="k">${k}</div><div class="v">${sgn(pv)}</div><div class="s">Predicted${av != null ? ` · class ${sgn(av)}` : ''}</div><div class="s">${s}</div></div>`;
+  $('slutsky').innerHTML = `<div class="split">` +
+    tile('Substitution effect', xc - x0, (ac != null && a0 != null) ? ac - a0 : null, 'Opening round to compensated round') +
+    tile('Income effect', x1 - xc, (a1 != null && ac != null) ? a1 - ac : null, 'Compensated round to the plain price rise') +
+    tile('Total change', x1 - x0, (a1 != null && a0 != null) ? a1 - a0 : null, 'Average tacos per student') +
+    `</div><p class="note" style="margin:10px 0 0">${ac == null ? `Run the compensated round with tacos at ${dollars(pNew)} to see the class's own split.` : 'Class figures use the first tallied round of each kind.'} Predicted figures use each type's best bundle.</p>`;
+}
+function compBudgetsFor(ref, pT){
+  const out = {};
+  KEYS.forEach(k => { const b = best(k, ref.pT, ref.pS, ref.budgets[k]); out[k] = pT * b.x + ref.pS * b.y; });
+  return out;
+}
+
+function renderSetup(){
+  $('nStudents').value = state.n;
+  $('mixNote').textContent = `${state.mix.A} Taco Fans, ${state.mix.B} Mixed Tastes, ${state.mix.C} Smoothie Fans.`;
+  $('types').innerHTML = KEYS.map(k => {
+    const T = TYPES[k], last = Math.max(T.T.findIndex(v => v === 0), T.S.findIndex(v => v === 0), 5);
+    const rows = Array.from({length: last}, (_, i) => `<tr><td>${i + 1}</td><td class="num tc">${T.T[i]}</td><td class="num sc">${T.S[i]}</td></tr>`).join('');
+    const b = best(k, 2, 4, 20);
+    return `<div class="type"><h3>${k} · ${T.name}</h3><table><thead><tr><th>Unit</th><th class="num">Taco</th><th class="num">Smoothie</th></tr></thead><tbody>${rows}</tbody></table><p class="note" style="margin:6px 0 0">Best at opening prices: ${b.x} tacos + ${b.y} smoothies, ${b.u} points</p></div>`;
+  }).join('');
+}
+
+function render(){
+  ['floor', 'debrief', 'setup'].forEach(v => { $('view-' + v).hidden = v !== view; $('tab-' + v).setAttribute('aria-selected', String(v === view)); });
+  $('exampleBanner').hidden = !state.example;
+  if (view === 'floor') renderFloor();
+  if (view === 'debrief') renderDebrief();
+  if (view === 'setup') renderSetup();
+}
+
+/* ---------- rules panel ---------- */
+function rulesSc(){
+  const key = $('rPreset').value;
+  const pT = Math.max(0.5, Number($('rPT').value) || 1), pS = Math.max(0.5, Number($('rPS').value) || 1), B = Math.max(1, Number($('rB').value) || 1);
+  return makeSc(key, pT, pS, B);
+}
+function updatePreview(){
+  const key = $('rPreset').value;
+  $('rBWrap').hidden = key === 'comp';
+  const sc = rulesSc();
+  const a = analyze(blankRound(sc));
+  const [h1, h2] = headline(sc);
+  const budgets = uniform(sc) ? '' : ` Budgets: ${KEYS.map(k => `${TYPES[k].name} ${dollars(sc.budgets[k])}`).join(', ')}.`;
+  $('rulesPreview').innerHTML = `<b>${esc(h1)}.</b> ${esc(h2)}${esc(budgets)} Prediction (for you): ${f1(a.predT)} tacos and ${f1(a.predS)} smoothies per student.`;
+}
+function openRules(){
+  const n = state.rounds.length;
+  $('rulesPanel').hidden = false;
+  $('rulesTitle').textContent = `Prices for round ${n + 1}`;
+  $('startRound').textContent = `Start round ${n + 1}`;
+  $('applyRound').hidden = hasData(cur());
+  $('applyRound').textContent = `Apply to round ${state.cur + 1} instead`;
+  const next = n === 1 ? 'tacoUp' : n === 2 ? 'tacoDn' : 'payday';
+  $('rPreset').value = next; fillPreset();
+  $('rPreset').focus();
+}
+function fillPreset(){
+  const p = preset($('rPreset').value);
+  $('rPT').value = p.pT; $('rPS').value = p.pS; $('rB').value = p.B || state.rounds[0].sc.budgets.A;
+  updatePreview();
+}
+
+/* ---------- downloads ---------- */
+let dl = null;
+function sheetsHTML(){
+  const sheet = k => {
+    const T = TYPES[k], last = Math.max(T.T.findIndex(v => v === 0), T.S.findIndex(v => v === 0), 6) + 1;
+    const rows = Array.from({length: last}, (_, i) => `<tr><td>${i + 1}</td><td>${T.T[i]}</td><td></td><td>${T.S[i]}</td><td></td></tr>`).join('');
+    const rec = [1, 2, 3, 4, 5, 6].map(i => `<tr><td>${i}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`).join('');
+    return `<div class="sheet ${k}"><div class="band">Type ${k} · ${T.name}</div><div class="body">
+<p>Each round, spend your budget on tacos and smoothies to score as many points as you can. Buy whole items only, never go over budget, and remember that unspent money scores nothing. The table shows the points each <i>additional</i> item adds.</p>
+<table class="mu"><tr><th>Item #</th><th>Taco points</th><th>÷ taco price</th><th>Smoothie points</th><th>÷ smoothie price</th></tr>${rows}</table>
+<table class="rec"><tr><th>Round</th><th>Taco $</th><th>Smoothie $</th><th>Budget</th><th>Tacos</th><th>Smoothies</th><th>Points</th></tr>${rec}</table></div></div>`;
+  };
+  let out = [];
+  KEYS.forEach(k => { for (let i = 0; i < state.mix[k]; i++) out.push(sheet(k)); });
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Food Truck Friday sheets</title><style>
+@page{size:letter;margin:0.45in}body{font-family:Archivo,Helvetica,Arial,sans-serif;margin:0;color:#1E1B16}
+.sheet{border:2px dashed #999;border-radius:6px;overflow:hidden;margin-bottom:14px;break-inside:avoid;page-break-inside:avoid}
+.band{color:#fff;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:13px;padding:6px 12px}
+.A .band{background:#C04A12}.B .band{background:#5F5A4E}.C .band{background:#7B3A93}
+.body{padding:8px 12px}p{font-size:11.5px;line-height:1.4;margin:0 0 8px}
+table{border-collapse:collapse;width:100%;font-size:11px;margin-bottom:8px}th,td{border:1px solid #bbb;padding:2px 6px;height:17px;text-align:center}
+th{background:#f1eee6}
+</style></head><body>${out.join('')}</body></html>`;
+}
+function csv(){
+  const lines = ['round,scenario,taco_price,smoothie_price,budget_A,budget_B,budget_C,good,quantity,students'];
+  state.rounds.forEach((r, i) => {
+    const sc = r.sc, head = [i + 1, sc.key, sc.pT, sc.pS, sc.budgets.A, sc.budgets.B, sc.budgets.C].join(',');
+    r.tT.forEach((c, q) => { if (c) lines.push(`${head},tacos,${q},${c}`); });
+    r.tS.forEach((c, q) => { if (c) lines.push(`${head},smoothies,${q},${c}`); });
+  });
+  return lines.join('\n') + '\n';
+}
+async function offer(filename, data){
+  if (!dl){ $('dlNote').textContent = "Downloads aren't available in this view."; return; }
+  try { await dl.save({filename, data}); $('dlNote').textContent = 'Saved ' + filename + '.'; }
+  catch (err){ const c = err && err.code; $('dlNote').textContent = c === 'declined' ? 'Download canceled.' : c === 'rate_limited' ? 'A download prompt is already open.' : "That download didn't go through. Try again in a moment."; }
+}
+function confirmBox(el, text, yes, onYes){
+  el.hidden = false;
+  el.innerHTML = `<div class="confirm"><span>${esc(text)}</span><button class="btn danger small" data-yes>${esc(yes)}</button><button class="btn small ghost" data-no>Keep everything</button></div>`;
+  el.querySelector('[data-yes]').onclick = () => { el.hidden = true; onYes(); };
+  el.querySelector('[data-no]').onclick = () => { el.hidden = true; };
+}
+
+/* ---------- wire ---------- */
+function wire(){
+  $('rPreset').innerHTML = PRESETS.map(p => `<option value="${p.key}">${esc(p.label)}</option>`).join('');
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => { view = b.dataset.view; render(); });
+  $('showPred').onchange = e => { state.showPred = e.target.checked; save(); renderFloorLive(); };
+  const onTally = e => {
+    const el = e.target.closest('input[data-good]'); if (!el) return;
+    const v = Math.max(0, Math.round(Number(el.value) || 0));
+    cur()[el.dataset.good === 't' ? 'tT' : 'tS'][+el.dataset.q] = v;
+    if (state.example) { state.example = false; $('exampleBanner').hidden = true; }
+    save(); renderFloorLive();
+  };
+  $('tIn').addEventListener('input', onTally); $('sIn').addEventListener('input', onTally);
+  const enterDown = e => {
+    if (e.key !== 'Enter') return;
+    const el = e.target.closest('input[data-good]'); if (!el) return;
+    e.preventDefault();
+    const next = $((el.dataset.good) + (+el.dataset.q + 1)) || (el.dataset.good === 't' ? $('s0') : null);
+    if (next){ next.focus(); next.select(); }
+  };
+  $('tIn').addEventListener('keydown', enterDown); $('sIn').addEventListener('keydown', enterDown);
+  $('clearTally').onclick = () => { const r = cur(); r.tT.fill(0); r.tS.fill(0); save(); renderFloor(); };
+  $('openRules').onclick = openRules;
+  $('cancelRules').onclick = () => { $('rulesPanel').hidden = true; };
+  $('rPreset').onchange = fillPreset;
+  ['rPT', 'rPS', 'rB'].forEach(id => $(id).oninput = () => {
+    const p = preset($('rPreset').value);
+    const changed = +$('rPT').value !== p.pT || +$('rPS').value !== p.pS || (p.B != null && +$('rB').value !== p.B);
+    if (changed && p.key !== 'comp') $('rPreset').value = 'custom';
+    updatePreview();
+  });
+  $('startRound').onclick = () => {
+    state.rounds.push(blankRound(rulesSc())); state.cur = state.rounds.length - 1;
+    state.showPred = false; state.example = false; save(); $('rulesPanel').hidden = true; render();
+  };
+  $('applyRound').onclick = () => { cur().sc = rulesSc(); save(); $('rulesPanel').hidden = true; render(); };
+  $('roundChips').addEventListener('click', e => { const c = e.target.closest('[data-round]'); if (c){ dRound = +c.dataset.round; renderDebrief(); } });
+  $('clearExample').onclick = () => { state = blankState(state.n); save(); view = 'floor'; render(); };
+  $('setClass').onclick = () => {
+    const n = Math.round(Math.min(90, Math.max(3, Number($('nStudents').value) || 34)));
+    const go = () => { const keep = state.example ? blankState(n) : {...state, n, mix: mix(n)}; state = keep; save(); render(); };
+    go();
+  };
+  $('resetBtn').onclick = () => confirmBox($('resetConfirm'), `Erase all ${state.rounds.length} rounds and their tallies?`, 'Erase rounds', () => { state = blankState(state.n); save(); render(); });
+  $('dlSheets').onclick = () => offer('food-truck-sheets.html', sheetsHTML());
+  $('dlCsv').onclick = () => offer('food-truck-tallies.csv', csv());
+}
+
+function boot(data){
+  state = (data && data.state) || load() || exampleState();
+  if (data && data.view) view = data.view;
+  wire(); render();
+  try { window.claude && window.claude.hot && typeof window.claude.hot.snapshot === 'function' && window.claude.hot.snapshot(() => ({state, view})); } catch (e) {}
+  if (window.claude && typeof window.claude.use === 'function'){
+    window.claude.use('downloads').then(ns => { dl = ns; if (!dl) $('dlNote').textContent = "Downloads aren't available in this view."; }).catch(() => {});
+  }
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+})();
+</script>
+
+</body></html>

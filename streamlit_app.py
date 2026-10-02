@@ -1,21 +1,23 @@
 """
-Apple Pit Market — Streamlit wrapper.
+Classroom market games — one Streamlit app, several projector-run games.
 
-Runs the Apple Pit double-auction game (apple_pit_market.html, in this folder)
-inside a Streamlit page, and adds two things the HTML file can't do by itself:
+Pick a game in the sidebar. Each game is a self-contained HTML file in this
+folder; this wrapper adds two things the HTML files can't do by themselves:
 
-  * Instructor passcode. Until you unlock it, the "Setup & cards" tab, which
-    lists every card's value and cost, is hidden. Students who open the app
-    see the trading floor and debrief only.
-  * Working downloads. The "Download printable cards" and "Download results
-    (.csv)" buttons save files straight from the game.
+  * Instructor passcode. Until you unlock it, each game's Setup tab (Apple Pit's
+    card values, Food Truck Friday's points tables) is hidden. One unlock
+    covers every game for as long as this browser tab stays open.
+  * Working downloads. The printable cards/sheets and CSV buttons save files.
 
-The passcode is "applesgame" out of the box. It only keeps the card list off
+The passcode is "applesgame" out of the box. It only keeps setup details off
 the projector and away from casual clicks; it isn't meant to be secure. To use
 a different one, set it in .streamlit/secrets.toml (or the app's Secrets box
 on Streamlit Community Cloud), which overrides the default:
 
     apple_pit_passcode = "choose-something"
+
+Each game also has its own link: add ?game=apples or ?game=foodtruck to the
+app's address to open straight to that game.
 
 Run locally:  streamlit run streamlit_app.py
 """
@@ -27,9 +29,34 @@ from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 
-GAME_FILE = Path(__file__).with_name("apple_pit_market.html")
+HERE = Path(__file__).parent
 
-st.set_page_config(page_title="Apple Pit Market", page_icon="🍎", layout="wide",
+# To add a game: drop its HTML file in this folder and add an entry here.
+GAMES = {
+    "apples": {
+        "label": "🍎 Apple Pit Market",
+        "file": "apple_pit_market.html",
+        "setup": "Setup & cards",
+        "about": "Supply and demand: a double-auction market with buyer and seller cards.",
+        "patches": [
+            # "Clear examples" would otherwise reuse the example deck, which is the same
+            # for everyone who opens the app. Deal a fresh random deck instead, so nobody
+            # can look up the cards in their own copy.
+            ("state = blankState(state.n, state.seed); save(); view = 'floor';",
+             "state = blankState(state.n, (Date.now() % 1e9) | 0); save(); view = 'floor';"),
+        ],
+    },
+    "foodtruck": {
+        "label": "🌮 Food Truck Friday",
+        "file": "food_truck_friday.html",
+        "setup": "Setup & sheets",
+        "about": "Consumer choice: spend a budget on tacos and smoothies, then build the demand curve.",
+        "patches": [],
+    },
+}
+DEFAULT_PASSCODE = "applesgame"
+
+st.set_page_config(page_title="Classroom Market Games", page_icon="🍎", layout="wide",
                    initial_sidebar_state="collapsed")
 
 # Give the game the whole width on a projector.
@@ -42,11 +69,29 @@ header[data-testid="stHeader"] {background: transparent;}
 
 
 # ----------------------------
-# Passcode
+# Which game
 # ----------------------------
-DEFAULT_PASSCODE = "applesgame"
+def _sync_game_link():
+    st.query_params["game"] = st.session_state.game_choice
 
 
+keys = list(GAMES)
+if "game_choice" not in st.session_state:
+    wanted = st.query_params.get("game", keys[0])
+    st.session_state.game_choice = wanted if wanted in GAMES else keys[0]
+
+with st.sidebar:
+    st.markdown("### 🎲 Game")
+    st.radio("Game", keys, key="game_choice", format_func=lambda k: GAMES[k]["label"],
+             label_visibility="collapsed", on_change=_sync_game_link)
+    game = GAMES[st.session_state.game_choice]
+    st.caption(game["about"])
+    st.divider()
+
+
+# ----------------------------
+# Passcode (one unlock covers every game)
+# ----------------------------
 def configured_passcode():
     try:
         code = st.secrets.get("apple_pit_passcode")
@@ -56,9 +101,8 @@ def configured_passcode():
 
 
 def check_passcode():
-    code = configured_passcode()
     entered = st.session_state.get("ap_passcode_entry", "")
-    if code and hmac.compare_digest(entered.encode(), str(code).encode()):
+    if hmac.compare_digest(entered.encode(), str(configured_passcode()).encode()):
         st.session_state.ap_unlocked = True
         st.session_state.ap_passcode_entry = ""
         st.session_state.ap_passcode_error = False
@@ -75,22 +119,23 @@ unlocked = bool(st.session_state.get("ap_unlocked"))
 with st.sidebar:
     st.markdown("### 🔒 Instructor")
     if unlocked:
-        st.success("Unlocked. **Setup & cards** is visible.")
+        st.success("Unlocked. The Setup tab is visible in every game.")
         st.caption("Lock it again before you put this screen on the projector.")
         st.button("Lock", on_click=lock, type="primary")
     else:
         st.text_input("Passcode", type="password", key="ap_passcode_entry", on_change=check_passcode)
-        st.button("Unlock Setup & cards", on_click=check_passcode)
+        st.button("Unlock setup", on_click=check_passcode)
         if st.session_state.get("ap_passcode_error"):
             st.error("That passcode didn't match.")
-        st.caption("Unlocking shows every card's value and cost. Keep it off the projector.")
+        st.caption("Unlocking shows each game's Setup tab (card values, points tables). "
+                   "Keep it off the projector.")
 
 
 # ----------------------------
 # Build the page we hand to the game frame
 # ----------------------------
 # Runs before the game's own script:
-#  - gives the game a downloads helper so its two download buttons save files;
+#  - gives the game a downloads helper so its download buttons save files;
 #  - grows the frame to fit the game, so there's no scrollbar inside a scrollbar.
 SHIM = """
 <script>
@@ -123,7 +168,7 @@ SHIM = """
 </script>
 """
 
-# Hides the Setup & cards tab and screen when the app is locked.
+# Hides the game's Setup tab and screen when the app is locked.
 LOCKED_CSS = """
 <style>
 #tab-setup, #view-setup { display: none !important; }
@@ -132,29 +177,28 @@ LOCKED_CSS = """
 
 
 @st.cache_data
-def load_game(mtime):
-    html = GAME_FILE.read_text(encoding="utf-8")
-    # "Clear examples" would otherwise reuse the example deck, which is the same for
-    # everyone who opens the app. Deal a fresh random deck instead, so nobody can
-    # look up the cards in their own copy.
-    html = html.replace("state = blankState(state.n, state.seed); save(); view = 'floor';",
-                        "state = blankState(state.n, (Date.now() % 1e9) | 0); save(); view = 'floor';")
+def load_game(key, mtime):
+    html = (HERE / GAMES[key]["file"]).read_text(encoding="utf-8")
+    for old, new in GAMES[key]["patches"]:
+        html = html.replace(old, new)
     return html
 
 
-def game_page(unlocked):
-    html = load_game(GAME_FILE.stat().st_mtime)
+def game_page(key, unlocked):
+    path = HERE / GAMES[key]["file"]
+    html = load_game(key, path.stat().st_mtime)
     inject = SHIM + ("" if unlocked else LOCKED_CSS)
     if "<head>" in html:
         return html.replace("<head>", "<head>" + inject, 1)
     return inject + html
 
 
-if not GAME_FILE.exists():
-    st.error(f"Can't find **{GAME_FILE.name}**. Put it in the same folder as this app.")
+key = st.session_state.game_choice
+if not (HERE / GAMES[key]["file"]).exists():
+    st.error(f"Can't find **{GAMES[key]['file']}**. Put it in the same folder as this app.")
     st.stop()
 
-components.html(game_page(unlocked), height=1400, scrolling=True)
+components.html(game_page(key, unlocked), height=1400, scrolling=True)
 
-st.caption("Trades are saved in this browser, so refreshing the page keeps your rounds. "
-           "Instructor tools are in the sidebar (open it with the » arrow at the top left).")
+st.caption("Each game saves its rounds in this browser, so refreshing or switching games keeps your data. "
+           "Switch games and unlock instructor tools in the sidebar (open it with the » arrow at the top left).")
