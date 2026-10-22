@@ -39,7 +39,7 @@ try:
 except ImportError:  # app still works, just without the QR image
     segno = None
 
-from shift_scenarios import KIND_LABELS, SCENARIO_BY_ID, SCENARIOS
+from shift_scenarios import DECKS, KIND_LABELS, MARKET, SCENARIO_BY_ID, SCENARIOS
 
 LETTERS = "ABCDE"
 ROOM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ"  # no I or O
@@ -52,6 +52,8 @@ SUPPLY_COLOR = "#c2410c"
 OLD_COLOR = "#9ca3af"
 CORRECT_COLOR = "#16a34a"
 OTHER_COLOR = "#94a3b8"
+CONTROL_COLOR = "#7c3aed"
+DWL_COLOR = "#6b7280"
 
 
 # --------------------------------------------------------------------------
@@ -246,7 +248,175 @@ def shift_graph_png(d: float, s: float, graph: str | None = None) -> bytes:
     return buf.getvalue()
 
 
-def show_graph(sc: dict) -> None:
+# --------------------------------------------------------------------------
+# Numeric market: surplus, price ceilings and floors
+# --------------------------------------------------------------------------
+def _shoelace(poly: list[tuple[float, float]]) -> tuple[float, tuple[float, float]]:
+    """Area and centroid of a polygon (repeated points are fine)."""
+    a = cx = cy = 0.0
+    for (x0, y0), (x1, y1) in zip(poly, poly[1:] + poly[:1]):
+        cross = x0 * y1 - x1 * y0
+        a += cross
+        cx += (x0 + x1) * cross
+        cy += (y0 + y1) * cross
+    if abs(a) < 1e-12:
+        return 0.0, (0.0, 0.0)
+    return abs(a) / 2, (cx / (3 * a), cy / (3 * a))
+
+
+def market_outcome(control: tuple[str, float] | None) -> dict:
+    """CS, PS and deadweight loss in MARKET, with an optional ("ceiling"|"floor", price).
+    Assumes the crates that do trade go to the highest-value buyers and come from
+    the lowest-cost sellers."""
+    a, b, c, d = (MARKET[k] for k in "abcd")
+    qe = (a - c) / (b + d)
+    pe = a - b * qe
+    kind, pc = control if control else (None, None)
+    binding = (kind == "ceiling" and pc < pe) or (kind == "floor" and pc > pe)
+    if binding:
+        qt, pp = min((a - pc) / b, (pc - c) / d), pc
+    else:
+        qt, pp = qe, pe
+    value, cost = a - b * qt, c + d * qt  # last buyer's value, last seller's cost
+    polys = {
+        "cs": [(0, pp), (0, a), (qt, value), (qt, pp)],
+        "ps": [(0, c), (0, pp), (qt, pp), (qt, cost)],
+        "dwl": [(qt, value), (qe, pe), (qt, cost)] if qt < qe - 1e-9 else [],
+    }
+    areas = {k: _shoelace(v)[0] if v else 0.0 for k, v in polys.items()}
+    return dict(qe=qe, pe=pe, qt=qt, pp=pp, binding=binding, kind=kind, pc=pc,
+                qd=(a - pp) / b, qs=(pp - c) / d, polys=polys,
+                cs=areas["cs"], ps=areas["ps"], dwl=areas["dwl"],
+                ts=areas["cs"] + areas["ps"])
+
+
+def _money(v: float, sign: bool = False) -> str:
+    v = round(v, 2)
+    body = f"${abs(v):,.0f}" if v == int(v) else f"${abs(v):,.2f}"
+    if sign:
+        return "no change" if v == 0 else ("+" if v > 0 else "−") + body
+    return ("−" if v < 0 else "") + body
+
+
+def surplus_table_md(control) -> str:
+    before, after = market_outcome(None), market_outcome(control)
+    rows = [("Consumer surplus", "cs"), ("Producer surplus", "ps"),
+            ("Total surplus", "ts"), ("Deadweight loss", "dwl")]
+    out = ["| | Free market | With the control | Change |", "|---|---:|---:|---:|"]
+    for label, k in rows:
+        out.append(f"| {label} | {_money(before[k])} | {_money(after[k])} | "
+                   f"{_money(after[k] - before[k], sign=True)} |")
+    return "\n".join(out)
+
+
+@st.cache_data(show_spinner=False)
+def numeric_graph_png(control: tuple | None, shade: str, revealed: bool,
+                      labels: str = "points") -> bytes:
+    a, b, c, d = (MARKET[k] for k in "abcd")
+    m = market_outcome(control)
+    fig, ax = plt.subplots(figsize=(6.4, 5.0), dpi=130)
+    qmax, pmax = 20, 20
+    ax.plot([0, qmax], [a, a - b * qmax], color=DEMAND_COLOR, lw=2.6, zorder=3)
+    ax.plot([0, qmax], [c, c + d * qmax], color=SUPPLY_COLOR, lw=2.6, zorder=3)
+    ax.text(19.0, 2.2, "D", color=DEMAND_COLOR, fontsize=14, weight="bold")
+    ax.text(18.9, c + d * 18.9 + 0.7, "S", color=SUPPLY_COLOR, fontsize=14, weight="bold")
+
+    if control:
+        kind, pc = control
+        ax.axhline(pc, color=CONTROL_COLOR, ls="--", lw=2, zorder=4)
+        tag = f"Price {kind} ${pc:g}"
+        if revealed and not m["binding"]:
+            tag += " (not binding)"
+        ax.text(0.3, pc + 0.35, tag, color=CONTROL_COLOR, fontsize=11, weight="bold")
+
+    if revealed:
+        fills = {"cs": (DEMAND_COLOR, "CS"), "ps": (SUPPLY_COLOR, "PS"),
+                 "dwl": (DWL_COLOR, "DWL")}
+        show = {"cs": ["cs"], "ps": ["ps"], "ts": ["cs", "ps"],
+                "all": ["cs", "ps", "dwl"], "eq": []}[shade]
+        for k in show:
+            poly = m["polys"][k]
+            if not poly:
+                continue
+            color, name = fills[k]
+            area, (cx, cy) = _shoelace(poly)
+            ax.fill([x for x, _ in poly], [y for _, y in poly], color=color,
+                    alpha=0.42 if k == "dwl" else 0.22, zorder=1,
+                    hatch="///" if k == "dwl" else None, edgecolor=color if k == "dwl" else None)
+            label = f"{name} = {_money(area)}"
+            if area < 15:  # small triangle: label beside it with a pointer
+                dx, dy = (2.8, -2.8) if m["kind"] == "floor" else (3.5, 3.0)
+                ax.annotate(label, (cx, cy), xytext=(cx + dx, cy + dy),
+                            fontsize=11, weight="bold", color="#374151",
+                            arrowprops=dict(arrowstyle="-", color="#374151", lw=1))
+            else:
+                ax.text(cx, cy, label, ha="center", va="center", fontsize=11.5,
+                        weight="bold", color="#1f2937", zorder=6)
+        # shortage / surplus at the control price
+        if control and m["binding"]:
+            qs, qd, pc = m["qs"], m["qd"], m["pc"]
+            lo, hi = sorted((qs, qd))
+            y = pc - 1.5 if m["kind"] == "ceiling" else pc + 0.9
+            ax.annotate("", xy=(hi, y), xytext=(lo, y),
+                        arrowprops=dict(arrowstyle="<->", color=CONTROL_COLOR, lw=1.8))
+            word = "Shortage" if m["kind"] == "ceiling" else "Surplus"
+            ax.text((lo + hi) / 2, y + (-0.75 if m["kind"] == "ceiling" else 0.35),
+                    f"{word} = {hi - lo:g}", ha="center", color=CONTROL_COLOR,
+                    fontsize=11, weight="bold")
+            ax.plot([m["qt"]] * 2, [0, pc], ls=":", color=CONTROL_COLOR, lw=1.2)
+
+    # Labeled points: intercepts always; equilibrium and the triangle corners when
+    # labels == "points" (or once the answer is revealed).
+    def point(q, p, color, offset):
+        ax.plot(q, p, "o", color=color, ms=6.5, zorder=8, clip_on=False)
+        text = f"${p:g}" if q == 0 else f"({q:g}, ${p:g})"
+        ax.annotate(text, (q, p), xytext=offset, textcoords="offset points",
+                    fontsize=11, weight="bold", color=color, zorder=9,
+                    bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.8))
+
+    point(0, a, DEMAND_COLOR, (8, -4))
+    point(0, c, SUPPLY_COLOR, (8, -4))
+    if labels == "points" or revealed:
+        ax.plot([m["qe"]] * 2, [0, m["pe"]], ls=":", color="black", lw=1)
+        ax.plot([0, m["qe"]], [m["pe"]] * 2, ls=":", color="black", lw=1)
+        point(m["qe"], m["pe"], "black", (12, -4))
+        if control and m["binding"]:
+            pc, qt = m["pc"], m["qt"]
+            if m["kind"] == "ceiling":
+                point(m["qs"], pc, SUPPLY_COLOR, (-58, 6))
+                point(m["qd"], pc, DEMAND_COLOR, (8, 4))
+                point(qt, a - b * qt, DEMAND_COLOR, (8, 4))
+            else:
+                point(m["qd"], pc, DEMAND_COLOR, (-62, 6))
+                point(m["qs"], pc, SUPPLY_COLOR, (6, -16))
+                point(qt, c + d * qt, SUPPLY_COLOR, (-60, -14))
+
+    ax.set_xlim(0, qmax)
+    ax.set_ylim(0, pmax)
+    ax.set_xticks(range(0, qmax + 1, 2))
+    ax.set_yticks(range(0, pmax + 1, 2))
+    ax.set_yticklabels([f"${v}" for v in range(0, pmax + 1, 2)])
+    ax.grid(True, color="#d1d5db", lw=0.6, zorder=0)
+    ax.set_xlabel(f"Quantity ({MARKET['q_unit']})", fontsize=11)
+    ax.set_ylabel("Price ($ per crate)", fontsize=11)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    fig.tight_layout()
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png")
+    plt.close(fig)
+    return buf.getvalue()
+
+
+def show_graph(sc: dict, revealed: bool = True) -> None:
+    if "num" in sc:
+        control = sc["num"]["control"]
+        st.image(numeric_graph_png(tuple(control) if control else None, sc["num"]["shade"],
+                                   revealed, sc["num"].get("labels", "points")),
+                 width="stretch")
+        if revealed and sc["kind"] == "control":
+            st.markdown(surplus_table_md(tuple(control)))
+        return
     st.image(shift_graph_png(sc["d"], sc["s"], sc.get("graph")), width="stretch")
     if sc["kind"] == "double":
         st.caption("Drawn with one shift larger than the other. Make the other shift "
@@ -338,6 +508,8 @@ def _student_panel(code: str, token: str) -> None:
                f"{KIND_LABELS[sc['kind']]}")
     st.markdown(f"<div class='sh-market'>Market: {sc['market']}</div>"
                 f"<div class='sh-text'>{sc['text']}</div>", unsafe_allow_html=True)
+    if "num" in sc and phase != "revealed":
+        show_graph(sc, revealed=False)
     st.write("")
 
     if phase == "open":
@@ -368,8 +540,11 @@ def _student_panel(code: str, token: str) -> None:
         else:
             st.error(f"Not quite. Answer: **{LETTERS[sc['answer']]}**.")
         st.write(sc["why"])
-        with st.expander("Show the graph"):
+        if "num" in sc:
             show_graph(sc)
+        else:
+            with st.expander("Show the graph"):
+                show_graph(sc)
 
 
 def student_view(code: str | None = None) -> None:
@@ -419,11 +594,13 @@ def _passcode_ok() -> bool:
 def _deck_settings() -> list[str] | None:
     """Returns a new question order if the instructor starts a new deck."""
     with st.expander("Deck settings", expanded=False):
+        preset = st.radio("Deck", list(DECKS) + ["Everything"], horizontal=True)
         kinds = st.multiselect(
             "Question types",
             options=list(KIND_LABELS),
-            default=list(KIND_LABELS),
+            default=DECKS.get(preset, list(KIND_LABELS)),
             format_func=KIND_LABELS.get,
+            key=f"sh_kinds_{preset}",
         )
         pool = [s for s in SCENARIOS if s["kind"] in kinds]
         chosen = st.multiselect(
@@ -432,6 +609,7 @@ def _deck_settings() -> list[str] | None:
             default=[s["id"] for s in pool],
             format_func=lambda sid: f"{SCENARIO_BY_ID[sid]['market']} — "
                                     f"{KIND_LABELS[SCENARIO_BY_ID[sid]['kind']]}",
+            key=f"sh_chosen_{preset}_{'-'.join(kinds)}",
         )
         shuffle = st.checkbox("Shuffle order", value=False)
         if st.button("Start new room with this deck", disabled=not chosen):
@@ -542,7 +720,9 @@ def presenter_view(unlocked: bool | None = None) -> None:
     with tally_col:
         _presenter_live(code, show_live)
     with graph_col:
-        if phase == "revealed":
+        if "num" in sc:
+            show_graph(sc, revealed=phase == "revealed")
+        elif phase == "revealed":
             show_graph(sc)
     if phase == "revealed":
         st.info(sc["why"])

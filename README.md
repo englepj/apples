@@ -19,7 +19,11 @@ Pick a game from the sidebar:
   ("A late frost hits the Yakima Valley..."), students vote A–D on their phones after
   scanning a QR code, and the reveal shows the answer, the before/after graph, and a
   one-line explanation. 20 scenarios: which curve shifts, shift vs. movement along,
-  price and quantity, and double shifts.
+  price and quantity, and double shifts. A second deck (12 questions) works one market
+  on a gridded graph with labeled intercepts and points: consumer and producer surplus,
+  then a price ceiling and a price floor (shortage or surplus, who wins and loses by how
+  much, deadweight loss, and non-binding controls). The reveal shades CS, PS and DWL with
+  dollar values and shows a before/after table.
 
 Each game is a self-contained HTML file. `streamlit_app.py` wraps them and adds:
 
@@ -70,13 +74,18 @@ students' phones to the projector.
    each phone gets a random token, so nothing about students is stored.
 3. Voting opens on each question. Bars stay hidden until you **Close voting** or
    **Reveal**, so early votes don't steer the room (flip **Live bars** to show them).
-4. **Deck settings** picks question types or specific scenarios and can shuffle.
+4. **Deck settings** picks a deck (**Shifts**, **Surplus & price controls**, or
+   **Everything**), narrows it to question types or specific scenarios, and can shuffle.
+   On surplus and price-control questions the graph is shown with the question, since
+   students need the labeled points to calculate.
    **Class summary** downloads per-question counts and % correct (aggregate only).
 
 Rooms live in the app's memory and last 12 hours. If Community Cloud restarts or the app
 goes to sleep, open a fresh presenter screen. If the QR code shows the wrong address, set
 `app_url = "https://your-app.streamlit.app"` in Secrets. To edit or add questions, change
-`SCENARIOS` in `shift_scenarios.py`.
+`SCENARIOS` in `shift_scenarios.py`. The surplus questions draw from `MARKET` there
+(demand intercept $20, supply intercept $2, equilibrium at 12 crates and $8); the app
+computes every area from it, so the shading and table always match the curves.
 
 ## Adding another game
 
