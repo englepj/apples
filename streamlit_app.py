@@ -1,7 +1,7 @@
 """
 Classroom market games — one Streamlit app, several projector-run games.
 
-Pick a game in the sidebar. Each game is a self-contained HTML file in this
+Pick a game in the sidebar. Most games are self-contained HTML files in this
 folder; this wrapper adds two things the HTML files can't do by themselves:
 
   * Instructor passcode. Until you unlock it, each game's Setup tab (Apple Pit's
@@ -19,7 +19,11 @@ on Streamlit Community Cloud), which overrides the default:
 
 Each game also has its own link: add ?game=apples or ?game=foodtruck to the
 app's address to open straight to that game (?game=planes for the
-airplane factory).
+airplane factory, ?game=shifts for Shift Happens).
+
+Shift Happens (shift_quiz.py) is a native Streamlit game rather than an HTML
+file, because students vote from their phones and the votes have to reach the
+projector. The same unlock opens its presenter screen; students don't need it.
 
 Run locally:  streamlit run streamlit_app.py
 """
@@ -61,6 +65,11 @@ GAMES = {
         "setup": "Setup & sheets",
         "about": "Production and cost: add one worker per round, then build MP, AP, MC and ATC from the class's output.",
         "patches": [],
+    },
+    "shifts": {
+        "label": "📈 Shift Happens",
+        "module": "shift_quiz",  # native Streamlit game, not an HTML file
+        "about": "Supply and demand shifts: news-event scenarios, live phone voting by QR code, and a graph reveal.",
     },
 }
 DEFAULT_PASSCODE = "applesgame"
@@ -203,6 +212,14 @@ def game_page(key, unlocked):
 
 
 key = st.session_state.game_choice
+
+# Native Streamlit games (phone voting) render themselves.
+if GAMES[key].get("module") == "shift_quiz":
+    import shift_quiz
+
+    shift_quiz.render(unlocked=unlocked, link_params={"game": key})
+    st.stop()
+
 if not (HERE / GAMES[key]["file"]).exists():
     st.error(f"Can't find **{GAMES[key]['file']}**. Put it in the same folder as this app.")
     st.stop()
